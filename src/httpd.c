@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
 	int sockfd;
     struct sockaddr_in server, client;
     char buffer[512];
+
     /* Create and bind a TCP socket */
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     /* Network functions need arguments in network byte order instead of
@@ -32,10 +33,10 @@ int main(int argc, char *argv[])
         int connfd = accept(sockfd, (struct sockaddr *) &client, &len);
 
         /* Receive from connfd, not sockfd. */
-        ssize_t n = recv(connfd, buffer, sizeof(message) - 1, 0);
+        ssize_t n = recv(connfd, buffer, sizeof(buffer) - 1, 0);
 
         buffer[n] = '\0';
-        fprintf(stdout, "Received:\n%s\n", message);
+        fprintf(stdout, "Received:\n%s\n", buffer);
 
         /* Send the message back. */
         send(connfd, buffer, (size_t) n, 0);
