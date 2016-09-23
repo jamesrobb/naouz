@@ -2,18 +2,18 @@ CC = gcc
 CPPFLAGS =
 CFLAGS = -std=c11 -D_XOPEN_SOURCE=700 -O2 -Wall
 #CFLAGS = -std=c11 -D_XOPEN_SOURCE=700 -O2 -Wall -Wextra -Wformat=2
-CFLAGS += `pkg-config --cflags --libs glib-2.0`
+CFLAGS += `pkg-config --cflags glib-2.0`
 OBJFLAGS = -c
 LDFLAGS =
 LOADLIBES =
-LDLIBS =
+LDLIBS = `pkg-config --libs glib-2.0`
 
 .DEFAULT: all
 .PHONY: all
 all: httpd
 
-httpd: httpd.o request.o util.o
-	$(CC) httpd.o request.o util.o -o httpd
+httpd: httpd.o request.o util.o log.o
+	$(CC) $(CFLAGS) httpd.o request.o util.o log.o -o httpd $(LDLIBS)
 
 httpd.o: httpd.c
 	$(CC) $(OBJFLAGS) $(CFLAGS) httpd.c
@@ -23,6 +23,9 @@ request.o: request.c
 
 util.o: util.c
 	$(CC) $(OBJFLAGS) $(CFLAGS) util.c
+
+log.o: log.c
+	$(CC) $(OBJFLAGS) $(CFLAGS) log.c
 
 clean:
 	rm -f *.o
