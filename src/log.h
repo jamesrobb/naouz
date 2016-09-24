@@ -1,4 +1,5 @@
 #ifndef LOG_H
+#define LOG_H
 
 #include <glib.h>
 #include <stdio.h>
