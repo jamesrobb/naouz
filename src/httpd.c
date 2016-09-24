@@ -77,7 +77,13 @@ int main(int argc, char *argv[]) {
 
     while (TRUE) {
 
+        // zero out client address info and data buffer
         memset(data_buffer, 0, DATA_BUFFER_LENGTH);
+        memset(&client_addr, 0, sizeof(client_addr));
+
+        // set appropriate client address length (otherwise client_addr isn't populated correctly by accept())
+        client_addr_len = sizeof(client_addr);
+
         FD_ZERO(&incoming_fds);
         FD_SET(master_socket, &incoming_fds);
         incoming_sd_max = master_socket;
@@ -108,11 +114,11 @@ int main(int argc, char *argv[]) {
         // new incoming connection
         if(FD_ISSET(master_socket, &incoming_fds)) {
             
-            if((new_socket = accept(master_socket, (struct sockaddr *)&client_addr, (socklen_t*)&client_addr_len)) < 0) {
-                g_critical("error establishing connection to client");
-            }
+            new_socket = accept(master_socket, (struct sockaddr *)&client_addr, (socklen_t*)&client_addr_len);
 
             if(new_socket > -1) {
+
+                g_info("new connection on socket fd %d, ip %s, port %d", new_socket, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
                 bool found_socket = FALSE;
                 for(int i = 0; i < MAX_CLIENT_CONNS; i++) {
@@ -129,6 +135,10 @@ int main(int argc, char *argv[]) {
                     g_critical("no free client connection slots available, unable to track this connection");
                     close(new_socket);
                 }
+
+            } else {
+
+                g_critical("error establishing connection to client");
 
             }
         }
@@ -150,12 +160,12 @@ int main(int argc, char *argv[]) {
                 // is connecting being closed?
                 if(read_val == 0) {
 
-                    g_info("closing connection on ip %s, port %d", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                    g_info("closing connection on socket fd %d, ip %s, port %d", working_sd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
                     clients[i] = CONN_FREE;
 
                 } else {
 
-                    g_info("received some data from ip %s, port %d", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                    g_info("received some data from socket fd %d, ip %s, port %d", working_sd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
                     GString *welcome = g_string_new("HTTP/1.1 200 OK\n");
                     GString *welcome_payload = g_string_new("welcome to naouz!");
@@ -167,7 +177,7 @@ int main(int argc, char *argv[]) {
                     g_string_append_printf(welcome, "%s", welcome_payload->str);
 
                     if(send(working_sd, welcome->str, welcome->len, 0) != welcome->len){
-                        g_critical("failed to send() welcome message on ip %s, port %d", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                        g_critical("failed to send() welcome message on socket fd %d, ip %s, port %d", working_sd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
                     }
 
                 }
