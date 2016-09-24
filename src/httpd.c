@@ -13,6 +13,7 @@
 #include <sys/types.h>
 
 #include "log.h"
+#include "request.h"
 
 #define MAX_CLIENT_CONNS    50
 #define MAX_CONN_BACKLOG    10
@@ -103,8 +104,8 @@ int main(int argc, char *argv[]) {
         }
 
         select_activity = select(incoming_sd_max + 1, &incoming_fds, NULL, NULL, &select_timeout);
-        g_print("%d\n", select_activity);
-        g_info("select() timout or activity");
+        //g_print("%d\n", select_activity);
+        //g_info("select() timout or activity");
 
         // this is done to handle the case where select was not interrupted (ctrl+c) but returned an error.
         if(errno != EINTR && select_activity < 0){
@@ -166,6 +167,17 @@ int main(int argc, char *argv[]) {
                 } else {
 
                     g_info("received some data from socket fd %d, ip %s, port %d", working_sd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+
+                    http_request request;
+                    int request_ret_val = parse_http_request(data_buffer, &request);
+
+                    if(request_ret_val == 0) {
+                        g_print("http_method is: %s, uri is: %s, version is: %s\n", 
+                                (gchar *) g_hash_table_lookup(request.value_table, "http_method"),
+                                (gchar *) g_hash_table_lookup(request.value_table, "http_uri"),
+                                (gchar *) g_hash_table_lookup(request.value_table, "http_version")
+                                );
+                    }
 
                     GString *welcome = g_string_new("HTTP/1.1 200 OK\n");
                     GString *welcome_payload = g_string_new("welcome to naouz!");
