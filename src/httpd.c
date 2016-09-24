@@ -1,8 +1,10 @@
+#include <errno.h>
 #include <glib.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
@@ -25,6 +27,11 @@ int main(int argc, char *argv[]) {
 
     // create and bind tcp socket
     master_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+    if(master_socket == -1) {
+        g_critical("unable to create tcp socket. Exiting...");
+        exit(1);   
+    }
     
     // we use htons to convert data into network byte order
     memset(&server, 0, sizeof(server));
@@ -34,10 +41,15 @@ int main(int argc, char *argv[]) {
     bind(master_socket, (struct sockaddr *) &server, (socklen_t) sizeof(server));
 
     // we allow a backlog of MAX_CONN_BACKLOG
-    if(listen(master_socket, MAX_CONN_BACKLOG)) {
+    if(listen(master_socket, MAX_CONN_BACKLOG) == 0) {
         g_info("listening...");
     } else {
-        g_critical("unable to listen for MAX_CONN_BACKLOG connections...");
+        GString *listen_error = g_string_new("");
+        g_string_printf(listen_error, "%s", strerror(errno));
+
+        g_critical("%s", listen_error->str);
+        g_critical("unable to listen for MAX_CONN_BACKLOG connections. Exiting...");
+        exit(1);
     }
 
 
