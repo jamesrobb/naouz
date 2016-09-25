@@ -2,7 +2,7 @@
 
 int gchar_array_len(gchar *arr) {
 	// this function assumes arr is null terminated
-	int len = 1;
+	int len = 0;
 
 	while(arr[len] != '\0') {
 		len++;
@@ -12,5 +12,25 @@ int gchar_array_len(gchar *arr) {
 		}
 	}
 
+	return len+1;
+}
+
+int gchar_array_array_len(gchar **arr) {
+	// returns the length of an array of gchar arrays
+	int len = 0;
+
+	while(arr[len]) {
+		len++;
+	}
+
 	return len;
+}
+
+void ghash_table_strstr_iterator(gpointer key, gpointer value, gpointer user_data) {
+	g_print(user_data, (gchar*) key, (gchar*) value);
+	return;
+}
+
+void ghash_table_gchar_destroy(gpointer value) {
+	g_free((gchar *) value);
 }
