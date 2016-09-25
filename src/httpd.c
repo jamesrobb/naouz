@@ -73,6 +73,7 @@ int main(int argc, char *argv[]) {
 
         g_critical("%s", listen_error->str);
         g_critical("unable to listen for MAX_CONN_BACKLOG connections. Exiting...");
+        g_string_free(listen_error, TRUE);
         exit(1);
     }
 
@@ -172,12 +173,15 @@ int main(int argc, char *argv[]) {
                     int request_ret_val = parse_http_request(data_buffer, &request);
 
                     if(request_ret_val == 0) {
-                        g_print("http_method is: %s, uri is: %s, version is: %s\n", 
-                                (gchar *) g_hash_table_lookup(request.value_table, "http_method"),
-                                (gchar *) g_hash_table_lookup(request.value_table, "http_uri"),
-                                (gchar *) g_hash_table_lookup(request.value_table, "http_version")
-                                );
+                        //http_request_print(&request);
+                        // g_print("http_method is: %s, uri is: %s, version is: %s\n", 
+                        //         (gchar *) g_hash_table_lookup(request.value_table, "http_method"),
+                        //         (gchar *) g_hash_table_lookup(request.value_table, "http_uri"),
+                        //         (gchar *) g_hash_table_lookup(request.value_table, "http_version")
+                        //         );
                     }
+
+                    g_hash_table_destroy(request.value_table);
 
                     GString *welcome = g_string_new("HTTP/1.1 200 OK\n");
                     GString *welcome_payload = g_string_new("welcome to naouz!");
@@ -191,6 +195,9 @@ int main(int argc, char *argv[]) {
                     if(send(working_sd, welcome->str, welcome->len, 0) != welcome->len){
                         g_critical("failed to send() welcome message on socket fd %d, ip %s, port %d", working_sd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
                     }
+
+                    g_string_free(welcome, TRUE);
+                    g_string_free(welcome_payload, TRUE);
 
                 }
 
