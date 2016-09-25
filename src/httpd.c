@@ -20,6 +20,13 @@
 #define CONN_FREE           -1
 #define NAOUZ_VERSION       ((gchar*) "0.2")
 
+int master_listen_port = 0;
+
+static GOptionEntry option_entries[] = {
+  { "port", 'p', 0, G_OPTION_ARG_INT, &master_listen_port, "port to listen for connection on", "N" },
+  { NULL }
+};
+
 int main(int argc, char *argv[]) {
 
     // we set a custom logging callback
@@ -28,6 +35,31 @@ int main(int argc, char *argv[]) {
                        httpd_log_all_handler_cb, 
                        NULL);
 
+
+    // gather commnad line argument info
+    GError *option_error = NULL;
+    GOptionContext *option_context;
+
+    option_context = g_option_context_new ("- naouz http server");
+    g_option_context_add_main_entries (option_context, option_entries, NULL);
+
+    if (!g_option_context_parse (option_context, &argc, &argv, &option_error)) {
+      g_critical ("option parsing failed: %s. Exiting...", option_error->message);
+      exit (1);
+    }
+
+    if(master_listen_port == 0) {
+        g_print("a port number to listen on must be specified\n");
+        exit(1);
+    }
+
+    if(option_error != NULL) {
+        g_error_free(option_error);
+    }
+    g_option_context_free(option_context);
+
+
+    // begin setting up the server
     int master_socket;
     int new_socket;
     int clients[MAX_CLIENT_CONNS];
@@ -59,7 +91,7 @@ int main(int argc, char *argv[]) {
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_addr.sin_port = htons(32000);
+    server_addr.sin_port = htons(master_listen_port);
     bind(master_socket, (struct sockaddr *) &server_addr, (socklen_t) sizeof(server_addr));
 
     // we allow a backlog of MAX_CONN_BACKLOG
