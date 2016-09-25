@@ -25,7 +25,7 @@ void httpd_log_all_handler_cb (const gchar *log_domain,
 	GDateTime *now = g_date_time_new_now_utc();
 
 	// format a log message given the current time and log messaged passed to this function
-	GString *error_string = g_string_new("");
+	GString *error_string = g_string_new(NULL);
 	g_string_printf(error_string,
 					"[%d/%02d/%02d %02d:%02d:%02d] %s: %s \n", 
 					g_date_time_get_year(now),
@@ -45,6 +45,9 @@ void httpd_log_all_handler_cb (const gchar *log_domain,
 	log_fp = fopen(LOG_FILE_LOCATION, "a");
 	fwrite(error_string->str, (size_t) sizeof(gchar), (size_t) error_string->len, log_fp);
 	fclose(log_fp);
+
+	g_date_time_unref(now);
+	g_string_free(error_string, TRUE);
 
 	return;
 }
