@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
                     int request_ret_val = parse_http_request(data_buffer, &request);
 
                     if(request_ret_val == 0) {
-                        //http_request_print(&request);
+                        http_request_print(&request);
                         // g_print("http_method is: %s, uri is: %s, version is: %s\n", 
                         //         (gchar *) g_hash_table_lookup(request.value_table, "http_method"),
                         //         (gchar *) g_hash_table_lookup(request.value_table, "http_uri"),
