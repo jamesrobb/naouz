@@ -10,7 +10,6 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <sys/types.h>
 
 #include "log.h"
 #include "request.h"
@@ -174,11 +173,6 @@ int main(int argc, char *argv[]) {
 
                     if(request_ret_val == 0) {
                         http_request_print(&request);
-                        // g_print("http_method is: %s, uri is: %s, version is: %s\n", 
-                        //         (gchar *) g_hash_table_lookup(request.value_table, "http_method"),
-                        //         (gchar *) g_hash_table_lookup(request.value_table, "http_uri"),
-                        //         (gchar *) g_hash_table_lookup(request.value_table, "http_version")
-                        //         );
                     }
 
                     g_hash_table_destroy(request.value_table);
