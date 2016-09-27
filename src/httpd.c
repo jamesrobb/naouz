@@ -203,6 +203,17 @@ int main(int argc, char *argv[]) {
                     http_request request;
                     int request_ret_val = parse_http_request(data_buffer, &request);
 
+                    // start handling the query part of the http_uri field
+                    GHashTable *query_key_values = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);;
+                    // send the httpuri field with to the function as well as a reference to new keyvalue table
+                    http_request_parse_queries( g_hash_table_lookup(request.value_table, (gchar *) "http_uri"), query_key_values);
+
+                    // just checking how things ended
+
+                    g_hash_table_foreach(query_key_values, (GHFunc)ghash_table_strstr_iterator, "field: %s, value: %s\n");
+
+                    // end checking =================
+
                     if(request_ret_val == 0) {
                         http_request_print(&request);
                     }
