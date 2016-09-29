@@ -10,6 +10,7 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <time.h>
 
 #include "log.h"
 #include "request.h"
@@ -21,6 +22,28 @@
 #define NAOUZ_VERSION       ((gchar*) "0.2")
 
 int master_listen_port = 0;
+
+typedef struct _client_connection {
+    http_request *request;
+    time_t last_activity;
+    int fd;
+} client_connection;
+
+void reset_client_connection_http_request(client_connection *connection) {
+
+    g_hash_table_destroy(connection->request->queries);
+    g_hash_table_destroy(connection->request->header_fields);
+
+    free(connection->request);
+
+    connection->request = NULL;
+}
+
+void reset_client_connection(client_connection *connection) {
+    connection->request = NULL;
+    connection->last_activity = time(NULL);
+    connection->fd = CONN_FREE;
+}
 
 static GOptionEntry option_entries[] = {
   { "port", 'p', 0, G_OPTION_ARG_INT, &master_listen_port, "port to listen for connection on", "N" },
@@ -62,11 +85,11 @@ int main(int argc, char *argv[]) {
     // begin setting up the server
     int master_socket;
     int new_socket;
-    int clients[MAX_CLIENT_CONNS];
+    client_connection *clients[MAX_CLIENT_CONNS];
+    client_connection *working_client_connection; // client connecting we are currently dealing with
     int client_addr_len;
     int select_activity;
     int incoming_sd_max; // max socket (file) descriptor for incoming connections
-    int working_sd; // socket descriptor currently being operated on
     struct sockaddr_in server_addr, client_addr;
     char data_buffer[DATA_BUFFER_LENGTH];
     fd_set incoming_fds;
@@ -74,7 +97,8 @@ int main(int argc, char *argv[]) {
 
     // we initialize clients sockect fds
     for(int i = 0; i < MAX_CLIENT_CONNS; i++) {
-        clients[i] = CONN_FREE;
+        clients[i] = malloc(sizeof(client_connection));
+        reset_client_connection(clients[i]);
     }
 
     // create and bind tcp socket
@@ -123,14 +147,14 @@ int main(int argc, char *argv[]) {
         select_timeout.tv_sec = 1;
         for(int i = 0; i < MAX_CLIENT_CONNS; i++) {
 
-            working_sd = clients[i];
+            working_client_connection = clients[i];
 
-            if(working_sd > CONN_FREE) {
-                FD_SET(working_sd, &incoming_fds);
+            if(working_client_connection->fd > CONN_FREE) {
+                FD_SET(working_client_connection->fd, &incoming_fds);
             }
 
-            if(working_sd > incoming_sd_max) {
-                incoming_sd_max = working_sd;
+            if(working_client_connection->fd > incoming_sd_max) {
+                incoming_sd_max = working_client_connection->fd;
             }
 
         }
@@ -156,8 +180,9 @@ int main(int argc, char *argv[]) {
                 bool found_socket = FALSE;
                 for(int i = 0; i < MAX_CLIENT_CONNS; i++) {
 
-                    if(clients[i] == CONN_FREE) {
-                        clients[i] = new_socket;
+                    if(clients[i]->fd == CONN_FREE) {
+                        reset_client_connection(clients[i]);
+                        clients[i]->fd = new_socket;
                         found_socket = TRUE;
                         break;
                     }
@@ -179,29 +204,32 @@ int main(int argc, char *argv[]) {
         // we check our client connections to activity
         for(int i = 0; i < MAX_CLIENT_CONNS; i++) {
 
-            working_sd = clients[i];
+            working_client_connection = clients[i];
 
-            if(working_sd == CONN_FREE) {
+            if(working_client_connection->fd == CONN_FREE) {
                 continue;
             }
 
-            if(FD_ISSET(working_sd, &incoming_fds)) {
+            if(FD_ISSET(working_client_connection->fd, &incoming_fds)) {
 
-                int read_val = read(working_sd, data_buffer, DATA_BUFFER_LENGTH);
-                getpeername(working_sd, (struct sockaddr*)&client_addr , (socklen_t*)&client_addr_len);
+                int read_val = read(working_client_connection->fd, data_buffer, DATA_BUFFER_LENGTH);
+                getpeername(working_client_connection->fd, (struct sockaddr*)&client_addr , (socklen_t*)&client_addr_len);
 
                 // is connecting being closed?
                 if(read_val == 0) {
 
-                    g_info("closing connection on socket fd %d, ip %s, port %d", working_sd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-                    clients[i] = CONN_FREE;
+                    g_info("closing connection on socket fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                    clients[i]->fd = CONN_FREE;
 
                 } else {
 
-                    g_info("received some data from socket fd %d, ip %s, port %d", working_sd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                    g_info("received some data from socket fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
-                    http_request request;
-                    int request_ret_val = parse_http_request(data_buffer, &request);
+                    working_client_connection->request = malloc(sizeof(http_request));
+                    working_client_connection->request->queries = NULL;
+                    working_client_connection->request->header_fields = NULL;
+
+                    int request_ret_val = parse_http_request(data_buffer, working_client_connection->request);
 
                     // start handling the query part of the http_uri field
                     GHashTable *query_key_values = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);;
@@ -215,10 +243,11 @@ int main(int argc, char *argv[]) {
                     // end checking =================
 
                     if(request_ret_val == 0) {
-                        http_request_print(&request);
+                        http_request_print(working_client_connection->request);
                     }
 
-                    g_hash_table_destroy(request.header_fields);
+
+                    reset_client_connection_http_request(working_client_connection);
 
                     GString *welcome = g_string_new("HTTP/1.1 200 OK\n");
                     GString *welcome_payload = g_string_new("welcome to naouz!");
@@ -229,8 +258,8 @@ int main(int argc, char *argv[]) {
                     g_string_append_printf(welcome, "Content-Length: %d\n\n", (int) welcome_payload->len);
                     g_string_append_printf(welcome, "%s", welcome_payload->str);
 
-                    if(send(working_sd, welcome->str, welcome->len, 0) != welcome->len){
-                        g_critical("failed to send() welcome message on socket fd %d, ip %s, port %d", working_sd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                    if(send(working_client_connection->fd, welcome->str, welcome->len, 0) != welcome->len){
+                        g_critical("failed to send() welcome message on socket fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
                     }
 
                     g_string_free(welcome, TRUE);
