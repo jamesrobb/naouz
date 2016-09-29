@@ -5,7 +5,7 @@ int parse_http_request(char* data_buffer, http_request *request) {
 	bool return_with_error = FALSE;
 	gchar **buffer_split_line = g_strsplit((gchar *) data_buffer, NEWLINE_DELIM, 0);
 
-	request->value_table = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);
+	request->header_fields = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);
 
 	// yay pointer arithematic
 	for(int i = 0; buffer_split_line[i]; i++) {
@@ -30,19 +30,19 @@ int parse_http_request(char* data_buffer, http_request *request) {
 					val_set = TRUE;
 					gchar *key = g_malloc(12);
 					g_stpcpy(key, "http_method\0");
-					g_hash_table_insert(request->value_table, key, value);
+					g_hash_table_insert(request->header_fields, key, value);
 				}
 				if(j == 1) {
 					val_set = TRUE;
 					gchar *key = g_malloc(9);
 					g_stpcpy(key, "http_uri\0");
-					g_hash_table_insert(request->value_table, key, value);
+					g_hash_table_insert(request->header_fields, key, value);
 				}
 				if(j == 2) {
 					val_set = TRUE;
 					gchar *key = g_malloc(13);
 					g_stpcpy(key, "http_version\0");
-					g_hash_table_insert(request->value_table, key, value);
+					g_hash_table_insert(request->header_fields, key, value);
 				}
 
 				if(val_set == FALSE) {
@@ -74,7 +74,7 @@ int parse_http_request(char* data_buffer, http_request *request) {
 				gchar *value = g_malloc(gchar_array_len(current_line[1]));
 				g_stpcpy(value, current_line[1]);
 
-				g_hash_table_insert(request->value_table, key, value);
+				g_hash_table_insert(request->header_fields, key, value);
 
 			} else {
 				g_warning("malformed http request (fields)");
@@ -97,10 +97,9 @@ int parse_http_request(char* data_buffer, http_request *request) {
 }
 
 void http_request_print(http_request *request) {
-	g_hash_table_foreach(request->value_table, (GHFunc)ghash_table_strstr_iterator, "field: %s, value: %s\n");
+	g_hash_table_foreach(request->header_fields, (GHFunc)ghash_table_strstr_iterator, "field: %s, value: %s\n");
 	return;
 }
-
 int http_request_parse_queries(gchar *http_uri, GHashTable *key_value_table) {
 
 	// first try to get anything in a query field 

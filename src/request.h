@@ -16,7 +16,8 @@
 
 typedef struct _http_request
 {
-	GHashTable *value_table;
+	GHashTable *queries;
+	GHashTable *header_fields;
 } http_request;
 
 int parse_http_request(char* data_buffer, http_request *request);
