@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) {
                         http_request_print(&request);
                     }
 
-                    g_hash_table_destroy(request.value_table);
+                    g_hash_table_destroy(request.header_fields);
 
                     GString *welcome = g_string_new("HTTP/1.1 200 OK\n");
                     GString *welcome_payload = g_string_new("welcome to naouz!");
