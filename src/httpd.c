@@ -29,7 +29,7 @@ void reset_client_connection_http_request(client_connection *connection);
 
 void reset_client_connection(client_connection *connection);
 
-void parse_page_request(char* data_buffer, GString *payload, client_connection *connection);
+void parse_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
 
 static GOptionEntry option_entries[] = {
   { "port", 'p', 0, G_OPTION_ARG_INT, &master_listen_port, "port to listen for connection on", "N" },
@@ -223,6 +223,8 @@ int main(int argc, char *argv[]) {
                         http_request_print(working_client_connection->request);
                     }
 
+                    GString *response = g_string_new("");
+
                     if(g_hash_table_contains(working_client_connection->request->header_fields, "http_uri") == TRUE) {
                         
                         GString *uri = g_string_new(g_hash_table_lookup(working_client_connection->request->header_fields, "http_uri"));
@@ -234,11 +236,13 @@ int main(int argc, char *argv[]) {
                         g_hash_table_foreach(working_client_connection->request->queries, (GHFunc)ghash_table_strstr_iterator, "QUERIES - key: %s, value: %s\n");
 
                         if(g_strcmp0(uri->str, "/page") == 0) {
-                            g_info("we intend to show the page");
+                            parse_page_request(response, working_client_connection, uri->str, data_buffer);
+                            g_info("trying to send 'page'");
                         }
 
                         g_string_free(uri, TRUE);
                     }
+                    
                     if(g_hash_table_contains(working_client_connection->request->header_fields, "Cookie") == TRUE) {
                         GString *cookies = g_string_new(g_hash_table_lookup(working_client_connection->request->header_fields, "Cookie"));
 
@@ -253,22 +257,11 @@ int main(int argc, char *argv[]) {
 
                     reset_client_connection_http_request(working_client_connection);
 
-                    GString *welcome = g_string_new("HTTP/1.1 200 OK\n");
-                    GString *welcome_payload = g_string_new("welcome to naouz!");
-                    g_string_append_printf(welcome, "Connection: close\n");
-                    g_string_append_printf(welcome, "Server: naouz/%s\n", NAOUZ_VERSION);
-                    g_string_append_printf(welcome, "Accept-Ranges: bytes\n");
-                    g_string_append_printf(welcome, "Content-Type: text/html\n");
-                    g_string_append_printf(welcome, "Set-cookie: first=time\n");
-                    g_string_append_printf(welcome, "Content-Length: %d\n\n", (int) welcome_payload->len);
-                    g_string_append_printf(welcome, "%s", welcome_payload->str);
-
-                    if(send(working_client_connection->fd, welcome->str, welcome->len, 0) != welcome->len){
+                    if(send(working_client_connection->fd, response->str, response->len, 0) != response->len){
                         g_critical("failed to send() welcome message on socket fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
                     }
 
-                    g_string_free(welcome, TRUE);
-                    g_string_free(welcome_payload, TRUE);
+                    g_string_free(response, TRUE);
 
                 }
 
@@ -294,6 +287,8 @@ int main(int argc, char *argv[]) {
         // shutdown(connfd, SHUT_RDWR);
         // close(connfd);
     }
+
+    close(master_socket);
 	return 0;
 }
 
@@ -313,13 +308,47 @@ void reset_client_connection(client_connection *connection) {
     connection->fd = CONN_FREE;
 }
 
-void parse_page_request(char* data_buffer, GString *payload, client_connection *connection) {
+void parse_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer) {
 
     GString *method = g_string_new(g_hash_table_lookup(connection->request->header_fields, "http_method"));
+    GString *header = g_string_new("");
+    GString *payload = g_string_new("");
+    GString *html_body = g_string_new("");
+    GString *body_text = g_string_new("");
+    struct sockaddr_in connection_addr;
+    int connection_addr_len;
+    int payload_length = 0;
 
-    if(g_strcmp0(method->str, "GET")) {
+    connection_addr_len = sizeof(connection_addr);
+    memset(&connection_addr, 0, connection_addr_len);
+
+    //getpeername(working_client_connection->fd, (struct sockaddr*)&connection_addr , (socklen_t*)&connection_addr_len);
+
+    if(g_strcmp0(method->str, "GET") == 0) {
+
+        getpeername(connection->fd, (struct sockaddr*)&connection_addr , (socklen_t*)&connection_addr_len);
+
+        g_string_append_printf(body_text,
+                               "http://%s%s %s:%d", 
+                               g_get_host_name(),
+                               uri,
+                               inet_ntoa(connection_addr.sin_addr), 
+                               ntohs(connection_addr.sin_port));
+        build_http_body(html_body, "", body_text->str);
+        build_http_document(payload, "NAOUZ! query page :)", html_body->str);
+        payload_length = payload->len;
+
+        build_http_header(header, HTTP_STATUS_200, payload_length);
+
+        g_string_append(response, header->str);
+        g_string_append(response, payload->str);
 
     }
 
+    g_string_free(method, TRUE);
+    g_string_free(header, TRUE);
+    g_string_free(payload, TRUE);
+    g_string_free(html_body, TRUE);
+    g_string_free(body_text, TRUE);
     return;
 }
