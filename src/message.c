@@ -1,7 +1,35 @@
 #include "message.h"
 
-void build_http_header(GString *payload, gchar *response_code) {
-	
+void build_http_body(GString *body, gchar *body_options, gchar *body_text) {
+
+	if(g_strcmp0(body_options, "") == 0) {
+		g_string_append(body, "<body>\n");
+	} else {
+		g_string_append_printf(body, "<body %s>\n", body_options);
+	}
+
+	g_string_append_printf(body, "%s\n</body>\n", body_text);
+
+	return;
+}
+
+void build_http_document(GString *document, gchar *title, gchar *body) {
+
+	gchar *format = "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<title>%s</title>\n</head>\n\n%s\n\n</html>";
+	g_string_append_printf(document, format, title, body);
+
+}
+
+void build_http_header(GString *header, gchar *response_code, int payload_length) {
+
+	g_string_append_printf(header, "HTTP/1.1 %s%s", response_code, NEWLINE_DELIM);
+    g_string_append_printf(header, "Connection: close%s", NEWLINE_DELIM);
+    g_string_append_printf(header, "Server: naouz/%s%s", NAOUZ_VERSION, NEWLINE_DELIM);
+    g_string_append_printf(header, "Accept-Ranges: bytes%s", NEWLINE_DELIM);
+    g_string_append_printf(header, "Content-Type: text/html%s", NEWLINE_DELIM);
+    g_string_append_printf(header, "Content-Length: %d%s%s", payload_length, NEWLINE_DELIM, NEWLINE_DELIM);
+
+    return;
 }
 
 int parse_http_request(char* data_buffer, GHashTable *header_fields) {

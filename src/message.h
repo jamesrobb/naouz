@@ -4,6 +4,7 @@
 #include <glib.h>
 #include <stdbool.h>
 
+#include "constants.h"
 #include "log.h"
 #include "util.h"
 
@@ -24,6 +25,12 @@ typedef struct _http_request
 	GHashTable *queries;
 	GHashTable *header_fields;
 } http_request;
+
+void build_http_body(GString *body, gchar *body_options, gchar *body_text);
+
+void build_http_document(GString *document, gchar *title, gchar *body);
+
+void build_http_header(GString *header, gchar *response_code, int payload_length); 
 
 int parse_http_request(char* data_buffer, GHashTable *header_fields);
 
