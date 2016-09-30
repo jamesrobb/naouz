@@ -12,14 +12,14 @@ LDLIBS = `pkg-config --libs glib-2.0`
 .PHONY: all
 all: httpd
 
-httpd: httpd.o request.o util.o log.o
-	$(CC) $(CFLAGS) httpd.o request.o util.o log.o -o httpd $(LDLIBS)
+httpd: httpd.o message.o util.o log.o
+	$(CC) $(CFLAGS) httpd.o message.o util.o log.o -o httpd $(LDLIBS)
 
 httpd.o: httpd.c
 	$(CC) $(OBJFLAGS) $(CFLAGS) httpd.c
 
-request.o: request.c
-	$(CC) $(OBJFLAGS) $(CFLAGS) request.c
+request.o: message.c
+	$(CC) $(OBJFLAGS) $(CFLAGS) message.c
 
 util.o: util.c
 	$(CC) $(OBJFLAGS) $(CFLAGS) util.c

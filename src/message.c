@@ -1,4 +1,8 @@
-#include "request.h"
+#include "message.h"
+
+void build_http_header(GString *payload, gchar *response_code) {
+	
+}
 
 int parse_http_request(char* data_buffer, GHashTable *header_fields) {
 

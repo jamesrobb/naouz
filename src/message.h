@@ -10,9 +10,11 @@
 #define NEWLINE_DELIM		((gchar *) "\r\n")
 #define REQUEST_LINE_DELIM	((gchar *) " ")
 #define REQUEST_FIELD_DELIM	((gchar *) ": ")
-#define REQUEST_URI_DELIM ((gchar *) "?")
+#define REQUEST_URI_DELIM 	((gchar *) "?")
 #define REQUEST_QUERY_DELIM ((gchar *) "&")
 #define REQUEST_QUERY_KEY_VALUE_DELIM ((gchar *) "=")
+
+#define HTTP_STATUS_200 	((gchar *) "200 OK")
 
 typedef struct _http_request
 {
