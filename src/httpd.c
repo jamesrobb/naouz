@@ -12,22 +12,13 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include "client_connection.h"
 #include "constants.h"
 #include "log.h"
 #include "message.h"
 
 
 int master_listen_port = 0;
-
-typedef struct _client_connection {
-    http_request *request;
-    time_t last_activity;
-    int fd;
-} client_connection;
-
-void reset_client_connection_http_request(client_connection *connection);
-
-void reset_client_connection(client_connection *connection);
 
 void parse_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
 
@@ -211,29 +202,21 @@ int main(int argc, char *argv[]) {
 
                     g_info("received some data from socket fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
-                    working_client_connection->request = malloc(sizeof(http_request));
-                    working_client_connection->request->cookies = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);
-                    working_client_connection->request->queries = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);
-                    working_client_connection->request->header_fields = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);
+                    // parse the http request (also allocates all the needed objects). zero indicates success
+                    int parse_ret = parse_client_http_request(working_client_connection, data_buffer);
 
-                    // parse the http request
-                    int request_ret_val = parse_http_request(data_buffer, working_client_connection->request->header_fields);
-
-                    if(request_ret_val == 0) {
+                    if(parse_ret == 0) {
                         http_request_print(working_client_connection->request);
                     }
 
                     GString *response = g_string_new("");
 
-                    if(g_hash_table_contains(working_client_connection->request->header_fields, "http_uri") == TRUE) {
+                    if(parse_ret == 0) {
                         
                         GString *uri = g_string_new(g_hash_table_lookup(working_client_connection->request->header_fields, "http_uri"));
 
-                        // send the httpuri field with to the function as well as a reference to new keyvalue table
-                        http_request_parse_queries(uri->str, working_client_connection->request->queries);
-
                         // outputting query key/value pairs
-                        g_hash_table_foreach(working_client_connection->request->queries, (GHFunc)ghash_table_strstr_iterator, "QUERIES - key: %s, value: %s\n");
+                        //g_hash_table_foreach(working_client_connection->request->queries, (GHFunc)ghash_table_strstr_iterator, "QUERIES - key: %s, value: %s\n");
 
                         if(g_strcmp0(uri->str, "/page") == 0) {
                             parse_page_request(response, working_client_connection, uri->str, data_buffer);
@@ -241,17 +224,6 @@ int main(int argc, char *argv[]) {
                         }
 
                         g_string_free(uri, TRUE);
-                    }
-                    
-                    if(g_hash_table_contains(working_client_connection->request->header_fields, "Cookie") == TRUE) {
-                        GString *cookies = g_string_new(g_hash_table_lookup(working_client_connection->request->header_fields, "Cookie"));
-
-                        http_request_parse_cookies(cookies->str, working_client_connection->request->cookies);
-
-                        // output the cookies
-                        g_hash_table_foreach(working_client_connection->request->cookies, (GHFunc)ghash_table_strstr_iterator, "COOKIES - key: %s, values: %s\n");
-
-                        g_string_free(cookies, TRUE);
                     }
 
 
@@ -292,22 +264,7 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-void reset_client_connection_http_request(client_connection *connection) {
 
-    g_hash_table_destroy(connection->request->queries);
-    g_hash_table_destroy(connection->request->header_fields);
-    g_hash_table_destroy(connection->request->cookies);
-
-    free(connection->request);
-
-    connection->request = NULL;
-}
-
-void reset_client_connection(client_connection *connection) {
-    connection->request = NULL;
-    connection->last_activity = time(NULL);
-    connection->fd = CONN_FREE;
-}
 
 void parse_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer) {
 
@@ -324,6 +281,31 @@ void parse_page_request(GString *response, client_connection *connection, char* 
     memset(&connection_addr, 0, connection_addr_len);
 
     //getpeername(working_client_connection->fd, (struct sockaddr*)&connection_addr , (socklen_t*)&connection_addr_len);
+
+    getpeername(connection->fd, (struct sockaddr*)&connection_addr , (socklen_t*)&connection_addr_len);
+
+
+    if(g_strcmp0(method->str, "GET") == 0) {
+        g_string_append_printf(body_text,
+                               "http://%s%s %s:%d", 
+                               g_get_host_name(),
+                               uri,
+                               inet_ntoa(connection_addr.sin_addr), 
+                               ntohs(connection_addr.sin_port));
+    }
+
+    if(g_strcmp0(method->str, "POST") == 0) {
+        g_string_append_printf(body_text, "\n\n%s", data_buffer);
+    }
+
+    build_http_body(html_body, "", body_text->str);
+    build_http_document(payload, "NAOUZ! query page :)", html_body->str);
+    payload_length = payload->len;
+
+    build_http_header(header, HTTP_STATUS_200, payload_length);
+
+    g_string_append(response, header->str);
+    g_string_append(response, payload->str);
 
     if(g_strcmp0(method->str, "GET") == 0) {
 
@@ -343,6 +325,10 @@ void parse_page_request(GString *response, client_connection *connection, char* 
 
         g_string_append(response, header->str);
         g_string_append(response, payload->str);
+
+    } else if (g_strcmp0(method->str, "POST") == 0) {
+
+        //g_string_append(body_text
 
     }
 
