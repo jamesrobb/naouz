@@ -32,7 +32,7 @@ void build_http_header(GString *header, gchar *response_code, int payload_length
     return;
 }
 
-int parse_http_request(char* data_buffer, GHashTable *header_fields) {
+int parse_http_header(GHashTable *header_fields, char* data_buffer) {
 
 	bool return_with_error = FALSE;
 	gchar **buffer_split_line = g_strsplit((gchar *) data_buffer, NEWLINE_DELIM, 0);
@@ -131,7 +131,7 @@ void http_request_print(http_request *request) {
 	return;
 }
 
-int http_request_parse_queries(gchar *http_uri, GHashTable *queries) {
+int http_request_parse_queries(GHashTable *queries, gchar *http_uri) {
 
 	// first try to get anything in a query field 
 	// query field is anything after ? in the http uri
@@ -172,7 +172,7 @@ int http_request_parse_queries(gchar *http_uri, GHashTable *queries) {
 	return 0;
 }
 
-int http_request_parse_cookies(gchar *http_cookies, GHashTable *cookies) {
+int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
 
 		// got to split by semi colons
 	gchar **cookie_split = g_strsplit(http_cookies, REQUEST_COOKIE_DELIM, 0);

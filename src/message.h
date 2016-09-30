@@ -24,6 +24,7 @@ typedef struct _http_request
 	GHashTable *cookies;
 	GHashTable *queries;
 	GHashTable *header_fields;
+	GString *payload;
 } http_request;
 
 void build_http_body(GString *body, gchar *body_options, gchar *body_text);
@@ -32,12 +33,12 @@ void build_http_document(GString *document, gchar *title, gchar *body);
 
 void build_http_header(GString *header, gchar *response_code, int payload_length); 
 
-int parse_http_request(char* data_buffer, GHashTable *header_fields);
+int parse_http_header(GHashTable *header_fields, char* data_buffer);
 
 void http_request_print(http_request *request);
 
-int http_request_parse_queries(gchar *http_uri, GHashTable *queries);
+int http_request_parse_queries(GHashTable *queries, gchar *http_uri);
 
-int http_request_parse_cookies(gchar *http_cookies, GHashTable *cookies);
+int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies);
 
 #endif
