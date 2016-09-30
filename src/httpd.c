@@ -29,21 +29,11 @@ typedef struct _client_connection {
     int fd;
 } client_connection;
 
-void reset_client_connection_http_request(client_connection *connection) {
+void reset_client_connection_http_request(client_connection *connection);
 
-    g_hash_table_destroy(connection->request->queries);
-    g_hash_table_destroy(connection->request->header_fields);
+void reset_client_connection(client_connection *connection);
 
-    free(connection->request);
-
-    connection->request = NULL;
-}
-
-void reset_client_connection(client_connection *connection) {
-    connection->request = NULL;
-    connection->last_activity = time(NULL);
-    connection->fd = CONN_FREE;
-}
+void parse_page_request(char* data_buffer, GString *payload, client_connection *connection);
 
 static GOptionEntry option_entries[] = {
   { "port", 'p', 0, G_OPTION_ARG_INT, &master_listen_port, "port to listen for connection on", "N" },
@@ -246,6 +236,17 @@ int main(int argc, char *argv[]) {
                         http_request_print(working_client_connection->request);
                     }
 
+                    if(g_hash_table_contains(working_client_connection->request->header_fields, "http_uri") == TRUE) {
+                        
+                        GString *uri = g_string_new(g_hash_table_lookup(working_client_connection->request->header_fields, "http_uri"));
+
+                        if(g_strcmp0(uri->str, "/page") == 0) {
+                            g_info("we intend to show the page");
+                        }
+
+                        g_string_free(uri, TRUE);
+                    }
+
 
                     reset_client_connection_http_request(working_client_connection);
 
@@ -290,4 +291,31 @@ int main(int argc, char *argv[]) {
         // close(connfd);
     }
 	return 0;
+}
+
+void reset_client_connection_http_request(client_connection *connection) {
+
+    g_hash_table_destroy(connection->request->queries);
+    g_hash_table_destroy(connection->request->header_fields);
+
+    free(connection->request);
+
+    connection->request = NULL;
+}
+
+void reset_client_connection(client_connection *connection) {
+    connection->request = NULL;
+    connection->last_activity = time(NULL);
+    connection->fd = CONN_FREE;
+}
+
+void parse_page_request(char* data_buffer, GString *payload, client_connection *connection) {
+
+    GString *method = g_string_new(g_hash_table_lookup(connection->request->header_fields, "http_method"));
+
+    if(g_strcmp0(method->str, "GET")) {
+
+    }
+
+    return;
 }
