@@ -1,11 +1,9 @@
 #include "request.h"
 
-int parse_http_request(char* data_buffer, http_request *request) {
+int parse_http_request(char* data_buffer, GHashTable *header_fields) {
 
 	bool return_with_error = FALSE;
 	gchar **buffer_split_line = g_strsplit((gchar *) data_buffer, NEWLINE_DELIM, 0);
-
-	request->header_fields = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);
 
 	// yay pointer arithematic
 	for(int i = 0; buffer_split_line[i]; i++) {
@@ -30,19 +28,19 @@ int parse_http_request(char* data_buffer, http_request *request) {
 					val_set = TRUE;
 					gchar *key = g_malloc(12);
 					g_stpcpy(key, "http_method\0");
-					g_hash_table_insert(request->header_fields, key, value);
+					g_hash_table_insert(header_fields, key, value);
 				}
 				if(j == 1) {
 					val_set = TRUE;
 					gchar *key = g_malloc(9);
 					g_stpcpy(key, "http_uri\0");
-					g_hash_table_insert(request->header_fields, key, value);
+					g_hash_table_insert(header_fields, key, value);
 				}
 				if(j == 2) {
 					val_set = TRUE;
 					gchar *key = g_malloc(13);
 					g_stpcpy(key, "http_version\0");
-					g_hash_table_insert(request->header_fields, key, value);
+					g_hash_table_insert(header_fields, key, value);
 				}
 
 				if(val_set == FALSE) {
@@ -74,7 +72,7 @@ int parse_http_request(char* data_buffer, http_request *request) {
 				gchar *value = g_malloc(gchar_array_len(current_line[1]));
 				g_stpcpy(value, current_line[1]);
 
-				g_hash_table_insert(request->header_fields, key, value);
+				g_hash_table_insert(header_fields, key, value);
 
 			} else {
 				g_warning("malformed http request (fields)");
@@ -100,7 +98,8 @@ void http_request_print(http_request *request) {
 	g_hash_table_foreach(request->header_fields, (GHFunc)ghash_table_strstr_iterator, "field: %s, value: %s\n");
 	return;
 }
-int http_request_parse_queries(gchar *http_uri, GHashTable *key_value_table) {
+
+int http_request_parse_queries(gchar *http_uri, GHashTable *queries) {
 
 	// first try to get anything in a query field 
 	// query field is anything after ? in the http uri
@@ -108,19 +107,35 @@ int http_request_parse_queries(gchar *http_uri, GHashTable *key_value_table) {
 
 	// if we have multiple question marks return error
 	if(initial_split[2]) {
+		g_strfreev(initial_split);
 		return -1;
 	}
 
 	// if we managed to split at ? we get queries at the back in field 2
 	if(initial_split[1]) {
+
 		// queries are like this key=value&key=value and so on
 		gchar **split_queries = g_strsplit(initial_split[1], REQUEST_QUERY_DELIM, 0);
 		int current_index = 0;
+
 		while(split_queries[current_index]){
 			gchar **split_key_values = g_strsplit(split_queries[current_index], REQUEST_QUERY_KEY_VALUE_DELIM, 2);
-			g_hash_table_insert(key_value_table, split_key_values[0], split_key_values[1]);
+			
+			gchar *key = g_malloc(gchar_array_len(split_key_values[0]));
+			g_stpcpy(key, split_key_values[0]);
+
+			gchar *value = g_malloc(gchar_array_len(split_key_values[1]));
+			g_stpcpy(value, split_key_values[1]);
+
+			g_hash_table_insert(queries, key, value);
+
+			g_strfreev(split_key_values);
 			current_index++;
 		}
+
+		g_strfreev(split_queries);
 	}
+
+	g_strfreev(initial_split);
 	return 0;
 }

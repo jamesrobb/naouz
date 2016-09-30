@@ -20,10 +20,10 @@ typedef struct _http_request
 	GHashTable *header_fields;
 } http_request;
 
-int parse_http_request(char* data_buffer, http_request *request);
+int parse_http_request(char* data_buffer, GHashTable *header_fields);
 
 void http_request_print(http_request *request);
 
-int http_request_parse_queries(gchar *http_uri, GHashTable *key_value_table);
+int http_request_parse_queries(gchar *http_uri, GHashTable *queries);
 
 #endif
