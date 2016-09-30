@@ -296,6 +296,7 @@ void reset_client_connection_http_request(client_connection *connection) {
 
     g_hash_table_destroy(connection->request->queries);
     g_hash_table_destroy(connection->request->header_fields);
+    g_hash_table_destroy(connection->request->cookies);
 
     free(connection->request);
 
