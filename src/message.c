@@ -157,16 +157,16 @@ int http_request_parse_cookies(gchar *http_cookies, GHashTable *cookies) {
 		gchar *value;
 		//if the first letter of the first value a space?
 		// then chug the leading whitespace
-		if(g_ascii_isspace(split_key_values[0][0])) {
-			g_strchug(split_key_values[0]);
-		}
+		// if(g_ascii_isspace(split_key_values[0][0])) {
+		// 	g_strchug(split_key_values[0]);
+		// }
 
 		// if we have a key value pair
 		if(split_key_values[1]) {
 			// chug the value if it's lead by whitespace
-			if(g_ascii_isspace(split_key_values[1][0])) {
-				g_strchug(split_key_values[1]);
-			}
+			// if(g_ascii_isspace(split_key_values[1][0])) {
+			// 	g_strchug(split_key_values[1]);
+			// }
 			key = g_malloc(gchar_array_len(split_key_values[0]));
 			g_stpcpy(key, split_key_values[0]);
 
