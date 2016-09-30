@@ -143,3 +143,41 @@ int http_request_parse_queries(gchar *http_uri, GHashTable *queries) {
 	g_strfreev(initial_split);
 	return 0;
 }
+
+int http_request_parse_cookies(gchar *http_cookies, GHashTable *cookies) {
+
+		// got to split by semi colons
+	gchar **cookie_split = g_strsplit(http_cookies, REQUEST_COOKIE_DELIM, 0);
+	int cookie_counter = 0;
+	while(cookie_split[cookie_counter]) {
+		// split by equals sign 
+		gchar **split_key_values = g_strsplit(cookie_split[cookie_counter], REQUEST_COOKIE_KEY_VALUE_DELIM, 2);
+
+		gchar *key;
+		gchar *value;
+		// if we have a key value pair
+		if(split_key_values[1]) {
+			key = g_malloc(gchar_array_len(split_key_values[0]));
+			g_stpcpy(key, split_key_values[0]);
+
+			value = g_malloc(gchar_array_len(split_key_values[1]));
+			g_stpcpy(value, split_key_values[1]);
+			
+		}
+		// if we only have a value
+		else {
+			key = g_malloc(gchar_array_len(split_key_values[0]));
+			g_stpcpy(key, split_key_values[0]);
+			value = NULL;
+		}
+		if(!g_hash_table_contains(cookies, key)){
+			g_hash_table_insert(cookies, key, value);
+		}
+
+		g_strfreev(split_key_values);
+		cookie_counter++;
+	}
+	g_strfreev(cookie_split);
+	
+	return 0;
+}
