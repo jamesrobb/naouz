@@ -138,7 +138,7 @@ int http_request_parse_queries(gchar *http_uri, GHashTable *queries) {
 	gchar **initial_split = g_strsplit(http_uri, REQUEST_URI_DELIM, 0);
 
 	// if we have multiple question marks return error
-	if(initial_split[2]) {
+	if(g_strv_length(initial_split) > 2) {
 		g_strfreev(initial_split);
 		return -1;
 	}
