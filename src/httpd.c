@@ -212,6 +212,7 @@ int main(int argc, char *argv[]) {
                     g_info("received some data from socket fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
                     working_client_connection->request = malloc(sizeof(http_request));
+                    working_client_connection->request->cookies = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);
                     working_client_connection->request->queries = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);
                     working_client_connection->request->header_fields = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);
 
@@ -230,13 +231,23 @@ int main(int argc, char *argv[]) {
                         http_request_parse_queries(uri->str, working_client_connection->request->queries);
 
                         // outputting query key/value pairs
-                        g_hash_table_foreach(working_client_connection->request->queries, (GHFunc)ghash_table_strstr_iterator, "field: %s, value: %s\n");
+                        g_hash_table_foreach(working_client_connection->request->queries, (GHFunc)ghash_table_strstr_iterator, "QUERIES - key: %s, value: %s\n");
 
                         if(g_strcmp0(uri->str, "/page") == 0) {
                             g_info("we intend to show the page");
                         }
 
                         g_string_free(uri, TRUE);
+                    }
+                    if(g_hash_table_contains(working_client_connection->request->header_fields, "Cookie") == TRUE) {
+                        GString *cookies = g_string_new(g_hash_table_lookup(working_client_connection->request->header_fields, "Cookie"));
+
+                        http_request_parse_cookies(cookies->str, working_client_connection->request->cookies);
+
+                        // output the cookies
+                        g_hash_table_foreach(working_client_connection->request->cookies, (GHFunc)ghash_table_strstr_iterator, "COOKIES - key: %s, values: %s\n");
+
+                        g_string_free(cookies, TRUE);
                     }
 
 
@@ -248,6 +259,7 @@ int main(int argc, char *argv[]) {
                     g_string_append_printf(welcome, "Server: naouz/%s\n", NAOUZ_VERSION);
                     g_string_append_printf(welcome, "Accept-Ranges: bytes\n");
                     g_string_append_printf(welcome, "Content-Type: text/html\n");
+                    g_string_append_printf(welcome, "Set-cookie: first=time\n");
                     g_string_append_printf(welcome, "Content-Length: %d\n\n", (int) welcome_payload->len);
                     g_string_append_printf(welcome, "%s", welcome_payload->str);
 
