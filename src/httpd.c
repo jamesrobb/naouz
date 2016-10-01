@@ -20,7 +20,10 @@
 
 int master_listen_port = 0;
 
+void build_bad_request_response();
+
 void parse_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
+
 void parse_colour_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
 
 static GOptionEntry option_entries[] = {
@@ -214,22 +217,27 @@ int main(int argc, char *argv[]) {
 
                     if(parse_ret == 0) {
                         
-                        GString *uri = g_string_new(g_hash_table_lookup(working_client_connection->request->header_fields, "uri_path"));
+                        GString *uri_path = g_string_new(g_hash_table_lookup(working_client_connection->request->header_fields, "uri_path"));
 
                         // outputting query key/value pairs
                         //g_hash_table_foreach(working_client_connection->request->queries, (GHFunc)ghash_table_strstr_iterator, "QUERIES - key: %s, value: %s\n");
 
-                        if(g_strcmp0(uri->str, "/page") == 0) {
-                            parse_page_request(response, working_client_connection, uri->str, data_buffer);
+                        if(g_strcmp0(uri_path->str, "/page") == 0) {
+                            parse_page_request(response, working_client_connection, uri_path->str, data_buffer);
                             g_info("trying to send 'page'");
                         }
 
-                        if(g_strcmp0(uri->str, "/colour") == 0) {
-                            parse_colour_page_request(response, working_client_connection, uri->str, data_buffer);
+                        if(g_strcmp0(uri_path->str, "/colour") == 0) {
+                            parse_colour_page_request(response, working_client_connection, uri_path->str, data_buffer);
                             g_info("trying to send 'colour'");
                         }
 
-                        g_string_free(uri, TRUE);
+                        g_string_free(uri_path, TRUE);
+
+                    } else {
+                        // prasing the request yieled an error
+
+                        build_bad_request_response(response);
                     }
 
 
@@ -266,8 +274,34 @@ int main(int argc, char *argv[]) {
         // close(connfd);
     }
 
+    shutdown(master_socket, SHUT_RDWR);
     close(master_socket);
 	return 0;
+}
+
+void build_bad_request_response(GString *response) {
+
+    GString *header = g_string_new("");
+    GString *payload = g_string_new("");
+    GString *html_body = g_string_new("");
+    GString *body_text = g_string_new("400 Bad Request");
+    int payload_length = 0;
+
+    build_http_body(html_body, "", body_text->str);
+    build_http_document(payload, "NAOUZ - 400 Bad Request", html_body->str);
+    payload_length = payload->len;
+
+    build_http_header(header, HTTP_STATUS_400, payload_length, NULL);
+
+    g_string_append(response, header->str);
+    g_string_append(response, payload->str);
+
+    g_string_free(header, TRUE);
+    g_string_free(payload, TRUE);
+    g_string_free(html_body, TRUE);
+    g_string_free(body_text, TRUE);
+
+    return;
 }
 
 
@@ -281,11 +315,10 @@ void parse_colour_page_request(GString *response, client_connection *connection,
     GString *body_text = g_string_new("");
     GString *body_options = g_string_new("");
 
-    GPtrArray *cookie_array = NULL; 
+    GPtrArray *cookie_array = g_ptr_array_new(); 
 
     int payload_length = 0;
     if(g_hash_table_contains(connection->request->queries, "colour")) {
-        cookie_array = g_ptr_array_new();
         gchar *key = "colour";
         colour = g_hash_table_lookup(connection->request->queries, "colour");
         
@@ -340,8 +373,8 @@ void parse_page_request(GString *response, client_connection *connection, char* 
 
     getpeername(connection->fd, (struct sockaddr*)&connection_addr , (socklen_t*)&connection_addr_len);
 
+    if(g_strcmp0(method->str, "GET") == 0 || g_strcmp0(method->str, "POST") == 0) {
 
-    if(g_strcmp0(method->str, "GET") == 0) {
         g_string_append_printf(body_text,
                                "http://%s%s %s:%d", 
                                g_get_host_name(),
@@ -351,42 +384,23 @@ void parse_page_request(GString *response, client_connection *connection, char* 
     }
 
     if(g_strcmp0(method->str, "POST") == 0) {
-        g_string_append_printf(body_text, "\n\n%s", data_buffer);
+
+        g_string_append_printf(body_text, "<br /><br />\n%s", connection->request->payload->str);
+
     }
 
-    build_http_body(html_body, "", body_text->str);
-    build_http_document(payload, "NAOUZ! query page :)", html_body->str);
-    payload_length = payload->len;
+    if(g_strcmp0(method->str, "HEAD") != 0) {
+
+        build_http_body(html_body, "", body_text->str);
+        build_http_document(payload, "NAOUZ! query page :)", html_body->str);
+        payload_length = payload->len;
+
+    }
 
     build_http_header(header, HTTP_STATUS_200, payload_length, NULL);
 
     g_string_append(response, header->str);
     g_string_append(response, payload->str);
-
-    if(g_strcmp0(method->str, "GET") == 0) {
-
-        getpeername(connection->fd, (struct sockaddr*)&connection_addr , (socklen_t*)&connection_addr_len);
-
-        g_string_append_printf(body_text,
-                               "http://%s%s %s:%d", 
-                               g_get_host_name(),
-                               uri,
-                               inet_ntoa(connection_addr.sin_addr), 
-                               ntohs(connection_addr.sin_port));
-        build_http_body(html_body, "", body_text->str);
-        build_http_document(payload, "NAOUZ! query page :)", html_body->str);
-        payload_length = payload->len;
-
-        build_http_header(header, HTTP_STATUS_200, payload_length, NULL);
-
-        g_string_append(response, header->str);
-        g_string_append(response, payload->str);
-
-    } else if (g_strcmp0(method->str, "POST") == 0) {
-
-        //g_string_append(body_text
-
-    }
 
     g_string_free(method, TRUE);
     g_string_free(header, TRUE);

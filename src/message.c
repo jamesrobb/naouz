@@ -27,21 +27,19 @@ void build_http_header(GString *header, gchar *response_code, int payload_length
     g_string_append_printf(header, "Server: naouz/%s%s", NAOUZ_VERSION, NEWLINE_DELIM);
     g_string_append_printf(header, "Accept-Ranges: bytes%s", NEWLINE_DELIM);
     g_string_append_printf(header, "Content-Type: text/html%s", NEWLINE_DELIM);
+
     if(cookie_array != NULL) {
     	GString *cookie_string = g_string_new("Set-Cookie: ");
     	
     	for(int i = 0; i < cookie_array->len; i+=2) {
 
-    		gchar *key = g_malloc(gchar_array_len(cookie_array->pdata[i]));
-			g_stpcpy(key, cookie_array->pdata[i]);
-			gchar *value = g_malloc(gchar_array_len(cookie_array->pdata[i+1]));
-			g_stpcpy(value, cookie_array->pdata[i+1]);
-
-    		g_string_append_printf(cookie_string, "%s=%s;", key, value);
+    		g_string_append_printf(cookie_string, "%s=%s;", (gchar *) cookie_array->pdata[i], (gchar *) cookie_array->pdata[i+1]);
     	}
+
     	g_string_append_printf(header, "%s%s", cookie_string->str, NEWLINE_DELIM);
     	g_string_free(cookie_string, TRUE);
     }
+
     g_string_append_printf(header, "Content-Length: %d%s%s", payload_length, NEWLINE_DELIM, NEWLINE_DELIM);
 
     return;
@@ -57,9 +55,16 @@ int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
 		// got to split by semi colons
 	gchar **cookie_split = g_strsplit(http_cookies, REQUEST_COOKIE_DELIM, 0);
 	int cookie_counter = 0;
+
 	while(cookie_split[cookie_counter]) {
 		// split by equals sign 
 		gchar **split_key_values = g_strsplit(cookie_split[cookie_counter], REQUEST_COOKIE_KEY_VALUE_DELIM, 2);
+
+		// currently ignores garbage cookie data, might need to come back to this so it returns an error (and therefore we recognize a bad request)
+		if(g_strv_length(split_key_values) == 0) {
+			g_strfreev(split_key_values);
+			continue;
+		}
 
 		gchar *key;
 		gchar *value;
@@ -98,8 +103,8 @@ int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
 		g_strfreev(split_key_values);
 		cookie_counter++;
 	}
+
 	g_strfreev(cookie_split);
-	
 	return 0;
 }
 
@@ -147,6 +152,7 @@ int http_request_parse_header(GHashTable *header_fields, char* data_buffer) {
 					gchar *path_value = g_malloc(gchar_array_len(split_query_path[0]));
 					g_stpcpy(path_value, split_query_path[0]);
 
+					g_strfreev(split_query_path);
 					g_hash_table_insert(header_fields, key, value);
 					g_hash_table_insert(header_fields, path_key, path_value);
 				}
@@ -206,6 +212,24 @@ int http_request_parse_header(GHashTable *header_fields, char* data_buffer) {
 	g_strfreev(buffer_split_line);
 
 	return (return_with_error == TRUE ? 1 : 0);
+}
+
+int http_request_parse_payload(GString *http_payload, char *data_buffer) {
+
+	// ret value is currently always zero, will implement logic later to detect an error condition
+	int ret_val = 0;
+	gchar *payload_start = g_strrstr(data_buffer, HTTP_PAYLOAD_DELIM);
+	gchar payload_buffer[DATA_BUFFER_LENGTH];
+
+	if(payload_start != NULL) {
+
+		g_stpcpy(payload_buffer, payload_start + 4 * sizeof(gchar));
+		g_string_append(http_payload, payload_buffer);
+
+		ret_val = 0;
+	}
+
+	return ret_val;
 }
 
 int http_request_parse_queries(GHashTable *queries, gchar *http_uri) {
