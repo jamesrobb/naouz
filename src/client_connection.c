@@ -13,6 +13,18 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
     int header_ret = http_request_parse_header(connection->request->header_fields, data_buffer);
     int queries_ret = 0;
     int cookies_ret = 0;
+    int method_check = 0; // we check to see if we receive an http method we support
+
+    if(g_hash_table_contains(connection->request->header_fields, "http_method") == TRUE && header_ret == 0) {
+
+    	GString *http_method = g_string_new(g_hash_table_lookup(connection->request->header_fields, "http_method"));
+
+    	if(g_strcmp0(http_method->str, "GET") != 0 && g_strcmp0(http_method->str, "POST") != 0 && g_strcmp0(http_method->str, "HEAD") != 0) {
+    		method_check = -1;
+    	}
+
+    	g_string_free(http_method, TRUE);
+	}
 
     if(g_hash_table_contains(connection->request->header_fields, "http_uri") == TRUE && header_ret == 0) {
 
@@ -35,7 +47,7 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
     g_string_free(cookie_field, TRUE);
 
     // blanket error return - did any error happen?
-    return header_ret || queries_ret || cookies_ret;
+    return header_ret || queries_ret || cookies_ret || method_check;
 }
 
 void reset_client_connection_http_request(client_connection *connection) {
