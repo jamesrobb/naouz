@@ -32,6 +32,58 @@ void build_http_header(GString *header, gchar *response_code, int payload_length
     return;
 }
 
+void http_request_print(http_request *request) {
+	g_hash_table_foreach(request->header_fields, (GHFunc)ghash_table_strstr_iterator, "field: %s, value: %s\n");
+	return;
+}
+
+int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
+
+		// got to split by semi colons
+	gchar **cookie_split = g_strsplit(http_cookies, REQUEST_COOKIE_DELIM, 0);
+	int cookie_counter = 0;
+	while(cookie_split[cookie_counter]) {
+		// split by equals sign 
+		gchar **split_key_values = g_strsplit(cookie_split[cookie_counter], REQUEST_COOKIE_KEY_VALUE_DELIM, 2);
+
+		gchar *key;
+		gchar *value;
+		// chug (trim leading whitespace) if the first letter of the first value a space
+		if(g_ascii_isspace(split_key_values[0][0])) {
+			g_strchug(split_key_values[0]);
+		}
+
+		// if we have a key value pair
+		if(split_key_values[1]) {
+			// chug if value has leading whitespace
+			if(g_ascii_isspace(split_key_values[1][0])) {
+				g_strchug(split_key_values[1]);
+			}
+			key = g_malloc(gchar_array_len(split_key_values[0]));
+			g_stpcpy(key, split_key_values[0]);
+
+			value = g_malloc(gchar_array_len(split_key_values[1]));
+			g_stpcpy(value, split_key_values[1]);
+			
+		}
+		// if we only have a value
+		else {
+			key = g_malloc(gchar_array_len(split_key_values[0]));
+			g_stpcpy(key, split_key_values[0]);
+			value = NULL;
+		}
+		if(!g_hash_table_contains(cookies, key)){
+			g_hash_table_insert(cookies, key, value);
+		}
+
+		g_strfreev(split_key_values);
+		cookie_counter++;
+	}
+	g_strfreev(cookie_split);
+	
+	return 0;
+}
+
 int parse_http_header(GHashTable *header_fields, char* data_buffer) {
 
 	bool return_with_error = FALSE;
@@ -126,11 +178,6 @@ int parse_http_header(GHashTable *header_fields, char* data_buffer) {
 	return (return_with_error == TRUE ? 1 : 0);
 }
 
-void http_request_print(http_request *request) {
-	g_hash_table_foreach(request->header_fields, (GHFunc)ghash_table_strstr_iterator, "field: %s, value: %s\n");
-	return;
-}
-
 int http_request_parse_queries(GHashTable *queries, gchar *http_uri) {
 
 	// first try to get anything in a query field 
@@ -169,53 +216,5 @@ int http_request_parse_queries(GHashTable *queries, gchar *http_uri) {
 	}
 
 	g_strfreev(initial_split);
-	return 0;
-}
-
-int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
-
-		// got to split by semi colons
-	gchar **cookie_split = g_strsplit(http_cookies, REQUEST_COOKIE_DELIM, 0);
-	int cookie_counter = 0;
-	while(cookie_split[cookie_counter]) {
-		// split by equals sign 
-		gchar **split_key_values = g_strsplit(cookie_split[cookie_counter], REQUEST_COOKIE_KEY_VALUE_DELIM, 2);
-
-		gchar *key;
-		gchar *value;
-		//if the first letter of the first value a space?
-		// then chug the leading whitespace
-		// if(g_ascii_isspace(split_key_values[0][0])) {
-		// 	g_strchug(split_key_values[0]);
-		// }
-
-		// if we have a key value pair
-		if(split_key_values[1]) {
-			// chug the value if it's lead by whitespace
-			// if(g_ascii_isspace(split_key_values[1][0])) {
-			// 	g_strchug(split_key_values[1]);
-			// }
-			key = g_malloc(gchar_array_len(split_key_values[0]));
-			g_stpcpy(key, split_key_values[0]);
-
-			value = g_malloc(gchar_array_len(split_key_values[1]));
-			g_stpcpy(value, split_key_values[1]);
-			
-		}
-		// if we only have a value
-		else {
-			key = g_malloc(gchar_array_len(split_key_values[0]));
-			g_stpcpy(key, split_key_values[0]);
-			value = NULL;
-		}
-		if(!g_hash_table_contains(cookies, key)){
-			g_hash_table_insert(cookies, key, value);
-		}
-
-		g_strfreev(split_key_values);
-		cookie_counter++;
-	}
-	g_strfreev(cookie_split);
-	
 	return 0;
 }

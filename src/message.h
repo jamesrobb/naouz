@@ -33,12 +33,13 @@ void build_http_document(GString *document, gchar *title, gchar *body);
 
 void build_http_header(GString *header, gchar *response_code, int payload_length); 
 
-int parse_http_header(GHashTable *header_fields, char* data_buffer);
-
 void http_request_print(http_request *request);
+
+int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies);
+
+int parse_http_header(GHashTable *header_fields, char* data_buffer);
 
 int http_request_parse_queries(GHashTable *queries, gchar *http_uri);
 
-int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies);
 
 #endif
