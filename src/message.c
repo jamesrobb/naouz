@@ -180,6 +180,7 @@ int http_request_parse_header(GHashTable *header_fields, char* data_buffer) {
 
 int http_request_parse_payload(GString *http_payload, char *data_buffer) {
 
+	// ret value is currently always zero, will implement logic later to detect an error condition
 	int ret_val = 0;
 	gchar *payload_start = g_strrstr(data_buffer, HTTP_PAYLOAD_DELIM);
 	gchar payload_buffer[DATA_BUFFER_LENGTH];
@@ -189,11 +190,9 @@ int http_request_parse_payload(GString *http_payload, char *data_buffer) {
 		g_stpcpy(payload_buffer, payload_start + 4 * sizeof(gchar));
 		g_string_append(http_payload, payload_buffer);
 
-		ret_val = 1;
+		ret_val = 0;
 	}
 
-	// g_free(payload_start);
-	// g_free(payload_buffer);
 	return ret_val;
 }
 
