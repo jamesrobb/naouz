@@ -84,7 +84,7 @@ int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
 	return 0;
 }
 
-int parse_http_header(GHashTable *header_fields, char* data_buffer) {
+int http_request_parse_header(GHashTable *header_fields, char* data_buffer) {
 
 	bool return_with_error = FALSE;
 	gchar **buffer_split_line = g_strsplit((gchar *) data_buffer, NEWLINE_DELIM, 0);

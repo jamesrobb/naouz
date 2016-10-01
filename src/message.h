@@ -37,7 +37,7 @@ void http_request_print(http_request *request);
 
 int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies);
 
-int parse_http_header(GHashTable *header_fields, char* data_buffer);
+int http_request_parse_header(GHashTable *header_fields, char* data_buffer);
 
 int http_request_parse_queries(GHashTable *queries, gchar *http_uri);
 
