@@ -87,8 +87,12 @@ int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
 			g_stpcpy(key, split_key_values[0]);
 			value = NULL;
 		}
-		if(!g_hash_table_contains(cookies, key)){
-			g_hash_table_insert(cookies, key, value);
+		gchar *key_stripped = g_malloc(gchar_array_len(split_key_values[0]));
+		gchar *value_stripped = g_malloc(gchar_array_len(split_key_values[1]));
+		gchar_char_strip(key, key_stripped, '"');
+		gchar_char_strip(value, value_stripped, '"');
+		if(!g_hash_table_contains(cookies, key_stripped)){
+			g_hash_table_insert(cookies, key_stripped, value_stripped);
 		}
 
 		g_strfreev(split_key_values);
