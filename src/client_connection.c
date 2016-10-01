@@ -59,7 +59,7 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
 
     	}
 
-	}
+    }
 
     if(g_hash_table_contains(connection->request->header_fields, "http_uri") == TRUE && header_ret == 0) {
 
