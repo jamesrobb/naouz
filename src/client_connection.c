@@ -21,9 +21,9 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
 
     }
 
-    if(g_hash_table_contains(connection->request->header_fields, "Cookie") == TRUE && header_ret == 0) {
+    if(g_hash_table_contains(connection->request->header_fields, "cookie") == TRUE && header_ret == 0) {
 
-		g_string_append(cookie_field, g_hash_table_lookup(connection->request->header_fields, "Cookie"));
+		g_string_append(cookie_field, g_hash_table_lookup(connection->request->header_fields, "cookie"));
 		cookies_ret = http_request_parse_cookies(connection->request->cookies, cookie_field->str);
     }
 
@@ -33,7 +33,6 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
 
     g_string_free(uri, TRUE);
     g_string_free(cookie_field, TRUE);
-
     // blanket error return - did any error happen?
     return header_ret || queries_ret || cookies_ret;
 }

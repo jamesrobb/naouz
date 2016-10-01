@@ -218,9 +218,8 @@ int main(int argc, char *argv[]) {
                     if(parse_ret == 0) {
                         
                         GString *uri_path = g_string_new(g_hash_table_lookup(working_client_connection->request->header_fields, "uri_path"));
-
                         // outputting query key/value pairs
-                        //g_hash_table_foreach(working_client_connection->request->queries, (GHFunc)ghash_table_strstr_iterator, "QUERIES - key: %s, value: %s\n");
+                        //g_hash_table_foreach(working_client_connection->request->cookies, (GHFunc)ghash_table_strstr_iterator, "QUERIES - key: %s, value: %s\n");
 
                         if(g_strcmp0(uri_path->str, "/page") == 0) {
                             parse_page_request(response, working_client_connection, uri_path->str, data_buffer);
