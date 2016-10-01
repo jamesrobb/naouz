@@ -32,8 +32,12 @@ void build_http_header(GString *header, gchar *response_code, int payload_length
     	GString *cookie_string = g_string_new("Set-Cookie: ");
     	
     	for(int i = 0; i < cookie_array->len; i+=2) {
-
-    		g_string_append_printf(cookie_string, "%s=%s;", (gchar *) cookie_array->pdata[i], (gchar *) cookie_array->pdata[i+1]);
+    		if(cookie_array->pdata[i+1]) {
+    			g_string_append_printf(cookie_string, "%s=%s;", (gchar *) cookie_array->pdata[i], (gchar *) cookie_array->pdata[i+1]);
+    		}
+    		else {
+    			g_string_append_printf(cookie_string, "%s=\"\";", (gchar *) cookie_array->pdata[i]);
+    		}
     	}
 
     	g_string_append_printf(header, "%s%s", cookie_string->str, NEWLINE_DELIM);
@@ -51,12 +55,12 @@ void http_request_print(http_request *request) {
 }
 
 int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
-
+	g_info("parsing cookies");
 		// got to split by semi colons
 	gchar **cookie_split = g_strsplit(http_cookies, REQUEST_COOKIE_DELIM, 0);
 	int cookie_counter = 0;
 
-	while(cookie_split[cookie_counter]) {
+	while(g_strcmp0(cookie_split[cookie_counter], "") != 0) {
 		// split by equals sign 
 		gchar **split_key_values = g_strsplit(cookie_split[cookie_counter], REQUEST_COOKIE_KEY_VALUE_DELIM, 2);
 
@@ -94,8 +98,8 @@ int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
 		}
 		gchar *key_stripped = g_malloc(gchar_array_len(split_key_values[0]));
 		gchar *value_stripped = g_malloc(gchar_array_len(split_key_values[1]));
-		gchar_char_strip(key, key_stripped, '"');
-		gchar_char_strip(value, value_stripped, '"');
+		gchar_char_strip(key_stripped, key, '"');
+		gchar_char_strip(value_stripped, value, '"');
 		if(!g_hash_table_contains(cookies, key_stripped)){
 			g_hash_table_insert(cookies, key_stripped, value_stripped);
 		}
@@ -103,7 +107,6 @@ int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
 		g_strfreev(split_key_values);
 		cookie_counter++;
 	}
-
 	g_strfreev(cookie_split);
 	return 0;
 }
