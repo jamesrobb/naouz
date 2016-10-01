@@ -22,9 +22,9 @@ int master_listen_port = 0;
 
 void build_bad_request_response();
 
-void parse_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
-
 void parse_colour_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
+
+void parse_generic_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
 
 static GOptionEntry option_entries[] = {
   { "port", 'p', 0, G_OPTION_ARG_INT, &master_listen_port, "port to listen for connection on", "N" },
@@ -222,17 +222,21 @@ int main(int argc, char *argv[]) {
                         // outputting query key/value pairs
                         //g_hash_table_foreach(working_client_connection->request->queries, (GHFunc)ghash_table_strstr_iterator, "QUERIES - key: %s, value: %s\n");
 
-                        if(g_strcmp0(uri_path->str, "/page") == 0) {
-                            parse_page_request(response, working_client_connection, uri_path->str, data_buffer);
-                            g_info("trying to send 'page'");
-                        }
-
                         if(g_strcmp0(uri_path->str, "/colour") == 0) {
                             parse_colour_page_request(response, working_client_connection, uri_path->str, data_buffer);
                             g_info("trying to send 'colour'");
+                        } else {
+                            parse_generic_page_request(response, working_client_connection, uri_path->str, data_buffer);
+                            g_info("trying to send 'page'");
                         }
 
                         g_string_free(uri_path, TRUE);
+
+                        httpd_log_access(inet_ntoa(client_addr.sin_addr),
+                                         ntohs(client_addr.sin_port),
+                                         g_hash_table_lookup(working_client_connection->request->header_fields, "http_method"),
+                                         g_hash_table_lookup(working_client_connection->request->header_fields, "http_uri"),
+                                         HTTP_STATUS_200);
 
                     } else {
                         // prasing the request yieled an error
@@ -355,7 +359,7 @@ void parse_colour_page_request(GString *response, client_connection *connection,
 }
 
 
-void parse_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer) {
+void parse_generic_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer) {
 
     GString *method = g_string_new(g_hash_table_lookup(connection->request->header_fields, "http_method"));
     GString *header = g_string_new("");
