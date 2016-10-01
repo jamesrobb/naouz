@@ -26,6 +26,8 @@ void parse_page_request(GString *response, client_connection *connection, char* 
 
 void parse_colour_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
 
+void parse_header_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
+
 static GOptionEntry option_entries[] = {
   { "port", 'p', 0, G_OPTION_ARG_INT, &master_listen_port, "port to listen for connection on", "N" },
   { NULL }
@@ -231,6 +233,11 @@ int main(int argc, char *argv[]) {
                             g_info("trying to send 'colour'");
                         }
 
+                        if(g_strcmp0(uri_path->str, "/headers") == 0) {
+                            parse_header_page_request(response, working_client_connection, uri_path->str, data_buffer);
+                            g_info("trying to send a 'headers'");
+                        }
+
                         g_string_free(uri_path, TRUE);
 
                     } else {
@@ -303,6 +310,35 @@ void build_bad_request_response(GString *response) {
     return;
 }
 
+void parse_header_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer) {
+    GString *method = g_string_new(g_hash_table_lookup(connection->request->header_fields, "http_method"));
+    GString *header = g_string_new("");
+    GString *payload = g_string_new("");
+    GString *html_body = g_string_new("");
+    GString *body_text = g_string_new("");
+
+    int payload_length = 0;
+
+    g_hash_table_foreach(connection->request->header_fields, (GHFunc) gstring_fill_with_header, body_text);
+
+    g_info("function check %s", body_text->str);
+
+    build_http_body(html_body, "", body_text->str);
+    build_http_document(payload, "NAOUZ! colour page :)", html_body->str);
+
+    payload_length = payload->len;
+    build_http_header(header, HTTP_STATUS_200, payload_length, NULL);
+
+    g_string_append(response, header->str);
+    g_string_append(response, payload->str);
+
+    g_string_free(method, TRUE);
+    g_string_free(header, TRUE);
+    g_string_free(payload, TRUE);
+    g_string_free(html_body, TRUE);
+    g_string_free(body_text, TRUE);
+
+}
 
 void parse_colour_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer) {
 
@@ -317,6 +353,7 @@ void parse_colour_page_request(GString *response, client_connection *connection,
     GPtrArray *cookie_array = g_ptr_array_new(); 
 
     int payload_length = 0;
+    
     if(g_hash_table_contains(connection->request->queries, "colour")) {
         gchar *key = "colour";
         colour = g_hash_table_lookup(connection->request->queries, "colour");
@@ -325,14 +362,14 @@ void parse_colour_page_request(GString *response, client_connection *connection,
         g_ptr_array_add(cookie_array, colour);
     }
     else if(g_hash_table_contains(connection->request->cookies, "colour")) {
+
         colour = g_hash_table_lookup(connection->request->cookies, "colour");
     }
-
 
     g_string_append_printf(body_options, "style=\"background-color:%s\"", colour);
 
     if(g_strcmp0(method->str, "POST") == 0) {
-        g_string_append_printf(body_text, "<br><br>%s", data_buffer);
+        g_string_append_printf(body_text, "<br><br>%s", connection->request->payload->str);
     }
     build_http_body(html_body, body_options->str, body_text->str);
     build_http_document(payload, "NAOUZ! colour page :)", html_body->str);
