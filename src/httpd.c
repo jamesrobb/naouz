@@ -291,11 +291,11 @@ void build_bad_request_response(GString *response) {
     GString *body_text = g_string_new("400 Bad Request");
     int payload_length = 0;
 
-    build_http_body(html_body, "", body_text->str);
-    build_http_document(payload, "NAOUZ - 400 Bad Request", html_body->str);
+    http_build_body(html_body, "", body_text->str);
+    http_build_document(payload, "NAOUZ - 400 Bad Request", html_body->str);
     payload_length = payload->len;
 
-    build_http_header(header, HTTP_STATUS_400, payload_length, NULL);
+    http_build_header(header, HTTP_STATUS_400, payload_length, NULL);
 
     g_string_append(response, header->str);
     g_string_append(response, payload->str);
@@ -339,11 +339,11 @@ void parse_colour_page_request(GString *response, client_connection *connection,
     if(g_strcmp0(method->str, "POST") == 0) {
         g_string_append_printf(body_text, "<br><br>%s", data_buffer);
     }
-    build_http_body(html_body, body_options->str, body_text->str);
-    build_http_document(payload, "NAOUZ! colour page :)", html_body->str);
+    http_build_body(html_body, body_options->str, body_text->str);
+    http_build_document(payload, "NAOUZ! colour page :)", html_body->str);
 
     payload_length = payload->len;
-    build_http_header(header, HTTP_STATUS_200, payload_length, cookie_array);
+    http_build_header(header, HTTP_STATUS_200, payload_length, cookie_array);
 
     g_string_append(response, header->str);
     g_string_append(response, payload->str);
@@ -395,13 +395,13 @@ void parse_generic_page_request(GString *response, client_connection *connection
 
     if(g_strcmp0(method->str, "HEAD") != 0) {
 
-        build_http_body(html_body, "", body_text->str);
-        build_http_document(payload, "NAOUZ! query page :)", html_body->str);
+        http_build_body(html_body, "", body_text->str);
+        http_build_document(payload, "NAOUZ! query page :)", html_body->str);
         payload_length = payload->len;
 
     }
 
-    build_http_header(header, HTTP_STATUS_200, payload_length, NULL);
+    http_build_header(header, HTTP_STATUS_200, payload_length, NULL);
 
     g_string_append(response, header->str);
     g_string_append(response, payload->str);

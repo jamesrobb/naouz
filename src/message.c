@@ -1,6 +1,6 @@
 #include "message.h"
 
-void build_http_body(GString *body, gchar *body_options, gchar *body_text) {
+void http_build_body(GString *body, gchar *body_options, gchar *body_text) {
 
 	if(g_strcmp0(body_options, "") == 0) {
 		g_string_append(body, "<body>\n");
@@ -13,14 +13,14 @@ void build_http_body(GString *body, gchar *body_options, gchar *body_text) {
 	return;
 }
 
-void build_http_document(GString *document, gchar *title, gchar *body) {
+void http_build_document(GString *document, gchar *title, gchar *body) {
 
 	gchar *format = "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<title>%s</title>\n</head>\n\n%s\n\n</html>";
 	g_string_append_printf(document, format, title, body);
 
 }
 
-void build_http_header(GString *header, gchar *response_code, int payload_length, GPtrArray *cookie_array) {
+void http_build_header(GString *header, gchar *response_code, int payload_length, GPtrArray *cookie_array) {
 
 	g_string_append_printf(header, "HTTP/1.1 %s%s", response_code, NEWLINE_DELIM);
     g_string_append_printf(header, "Connection: close%s", NEWLINE_DELIM);

@@ -29,11 +29,11 @@ typedef struct _http_request
 	GString *payload;
 } http_request;
 
-void build_http_body(GString *body, gchar *body_options, gchar *body_text);
+void http_build_body(GString *body, gchar *body_options, gchar *body_text);
 
-void build_http_document(GString *document, gchar *title, gchar *body);
+void http_build_document(GString *document, gchar *title, gchar *body);
 
-void build_http_header(GString *header, gchar *response_code, int payload_length, GPtrArray *cookie_array); 
+void http_build_header(GString *header, gchar *response_code, int payload_length, GPtrArray *cookie_array);
 
 void http_request_print(http_request *request);
 
