@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define LOG_FILE_LOCATION	((gchar*) "debug.log")
+#define DEBUG_LOG_FILE_LOCATION		((gchar*) "debug.log")
+#define ACCESS_LOG_FILE_LOCATION 	((gchar*) "access.log")
 
 const gchar * log_level_to_string (GLogLevelFlags level);
 
@@ -14,5 +15,12 @@ void httpd_log_all_handler_cb (const gchar *log_domain,
 							   const gchar *message,
 							   gpointer user_data);
 
+void httpd_log_access(gchar *client_ip, 
+					  int client_port,
+					  gchar *req_method, 
+					  gchar* uri, 
+					  gchar *response_code);
+
+void write_to_log_file(gchar *file_location, GString *error_string);
 
 #endif
