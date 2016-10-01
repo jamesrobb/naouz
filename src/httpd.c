@@ -191,18 +191,45 @@ int main(int argc, char *argv[]) {
                 continue;
             }
 
+            // get ip address and port of working client
+            getpeername(working_client_connection->fd, (struct sockaddr*)&client_addr , (socklen_t*)&client_addr_len);
+
+            if(time(NULL) - working_client_connection->last_activity >= CONNECTION_TIMEOUT) {
+
+                g_info("detected timeout on fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                
+                working_client_connection->close = TRUE;
+
+            }
+
+            if(working_client_connection->close == TRUE) {
+                
+                g_info("closing connection on socket fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                
+                shutdown(working_client_connection->fd, SHUT_RDWR);
+                close(working_client_connection->fd);
+                working_client_connection->fd = CONN_FREE;
+
+                continue;
+            }
+
             if(FD_ISSET(working_client_connection->fd, &incoming_fds)) {
 
                 int read_val = read(working_client_connection->fd, data_buffer, DATA_BUFFER_LENGTH);
-                getpeername(working_client_connection->fd, (struct sockaddr*)&client_addr , (socklen_t*)&client_addr_len);
 
                 // is connecting being closed?
                 if(read_val == 0) {
 
-                    g_info("closing connection on socket fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-                    clients[i]->fd = CONN_FREE;
+                    if(working_client_connection->keep_alive == TRUE) {
+                        //g_info("read end of buffer on keep-alive connection on socket fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                    } else {
+                        working_client_connection->close = TRUE;
+                    }
 
                 } else {
+
+                    // updating the most recent time we have done something with this connection
+                    working_client_connection->last_activity = time(NULL);
 
                     g_info("received some data from socket fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
@@ -255,8 +282,14 @@ int main(int argc, char *argv[]) {
                         g_critical("failed to send() welcome message on socket fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
                     }
 
+
                     g_string_free(response, TRUE);
                     g_string_free(host_name, TRUE);
+
+                    if(working_client_connection->keep_alive == FALSE) {
+                        // we do a half-shutdown, and stop writes to the client
+                        shutdown(working_client_connection->fd, SHUT_WR);
+                    }
                 }
 
             }
@@ -284,7 +317,7 @@ void build_bad_request_response(GString *response) {
     http_build_document(payload, "NAOUZ - 400 Bad Request", html_body->str);
     payload_length = payload->len;
 
-    http_build_header(header, HTTP_STATUS_400, payload_length, NULL);
+    http_build_header(header, HTTP_STATUS_400, NULL, payload_length, TRUE);
 
     g_string_append(response, header->str);
     g_string_append(response, payload->str);
@@ -332,7 +365,7 @@ void parse_colour_page_request(GString *response, client_connection *connection,
     http_build_document(payload, "NAOUZ! colour page :)", html_body->str);
 
     payload_length = payload->len;
-    http_build_header(header, HTTP_STATUS_200, payload_length, cookie_array);
+    http_build_header(header, HTTP_STATUS_200, cookie_array, payload_length, connection->keep_alive);
 
     g_string_append(response, header->str);
     g_string_append(response, payload->str);
@@ -390,7 +423,8 @@ void parse_generic_page_request(GString *response, client_connection *connection
 
     }
 
-    http_build_header(header, HTTP_STATUS_200, payload_length, NULL);
+    http_build_header(header, HTTP_STATUS_200, NULL, payload_length, connection->keep_alive);
+    g_info("OUR REQUEST HAS KEEP ALIVE VALUE %d", (int) connection->keep_alive);
 
     g_string_append(response, header->str);
     g_string_append(response, payload->str);

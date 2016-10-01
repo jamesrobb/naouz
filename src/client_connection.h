@@ -11,6 +11,8 @@ typedef struct _client_connection {
     http_request *request;
     time_t last_activity;
     int fd;
+    gboolean close; // if this flag is set, we know we can issue close() on the connection
+    gboolean keep_alive;
 } client_connection;
 
 int parse_client_http_request(client_connection *connection, char* data_buffer);

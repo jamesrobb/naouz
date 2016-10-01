@@ -14,6 +14,7 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
     int queries_ret = 0;
     int cookies_ret = 0;
     int method_check = 0; // we check to see if we receive an http method we support
+    int connection_header_check = 0;
 
     if(g_hash_table_contains(connection->request->header_fields, "http_method") == TRUE && header_ret == 0) {
 
@@ -24,6 +25,40 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
     	}
 
     	g_string_free(http_method, TRUE);
+	}
+
+	if(header_ret == 0) {
+
+		connection->keep_alive = FALSE;
+
+    	gchar *http_version = g_hash_table_lookup(connection->request->header_fields, "http_version");
+    	gchar *connection_header = g_hash_table_lookup(connection->request->header_fields, "connection");
+    	gboolean connection_header_exists = g_hash_table_contains(connection->request->header_fields, "connection");
+
+    	if(connection_header_exists == TRUE) {
+
+			gboolean connection_header_is_keep_alive = g_strcmp0(connection_header, "keep-alive") == 0 ? TRUE : FALSE;
+			gboolean connection_header_is_close = g_strcmp0(connection_header, "close") == 0 ? TRUE : FALSE;
+
+			if(connection_header_is_keep_alive) {
+				connection->keep_alive = TRUE;
+    		} else if(connection_header_is_close) {
+    			connection->keep_alive = FALSE;
+    		} else {
+    			connection_header_check = -1;
+    		}
+
+    	} else {
+
+    		if(g_strcmp0(http_version, "HTTP/1.1") == 0) {
+    			connection->keep_alive = TRUE;
+    		} else {
+    			// we treat everything else as HTTP/1.0
+    			connection->keep_alive = FALSE;
+    		}
+
+    	}
+
 	}
 
     if(g_hash_table_contains(connection->request->header_fields, "http_uri") == TRUE && header_ret == 0) {
@@ -47,7 +82,7 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
     g_string_free(cookie_field, TRUE);
 
     // blanket error return - did any error happen?
-    return header_ret || queries_ret || cookies_ret || method_check;
+    return header_ret || queries_ret || cookies_ret || method_check || connection_header_check;
 }
 
 void reset_client_connection_http_request(client_connection *connection) {
@@ -66,4 +101,6 @@ void reset_client_connection(client_connection *connection) {
     connection->request = NULL;
     connection->last_activity = time(NULL);
     connection->fd = CONN_FREE;
+    connection->close = FALSE;
+    connection->keep_alive = FALSE;
 }
