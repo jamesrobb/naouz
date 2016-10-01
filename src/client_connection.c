@@ -9,7 +9,7 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
 
     GString *uri = NULL;
     GString *cookie_field = NULL;
-    int header_ret = parse_http_header(connection->request->header_fields, data_buffer);
+    int header_ret = http_request_parse_header(connection->request->header_fields, data_buffer);
     int queries_ret = 0;
     int cookies_ret = 0;
 
