@@ -9,6 +9,7 @@
 #include "util.h"
 
 #define NEWLINE_DELIM		((gchar *) "\r\n")
+#define HTTP_PAYLOAD_DELIM	((gchar *) "\r\n\r\n")
 #define REQUEST_LINE_DELIM	((gchar *) " ")
 #define REQUEST_FIELD_DELIM	((gchar *) ": ")
 #define REQUEST_URI_DELIM 	((gchar *) "?")
@@ -38,6 +39,8 @@ void http_request_print(http_request *request);
 int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies);
 
 int http_request_parse_header(GHashTable *header_fields, char* data_buffer);
+
+int http_request_parse_payload(GString *http_payload, char *data_buffer);
 
 int http_request_parse_queries(GHashTable *queries, gchar *http_uri);
 

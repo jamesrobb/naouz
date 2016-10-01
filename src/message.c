@@ -178,6 +178,25 @@ int http_request_parse_header(GHashTable *header_fields, char* data_buffer) {
 	return (return_with_error == TRUE ? 1 : 0);
 }
 
+int http_request_parse_payload(GString *http_payload, char *data_buffer) {
+
+	int ret_val = 0;
+	gchar *payload_start = g_strrstr(data_buffer, HTTP_PAYLOAD_DELIM);
+	gchar payload_buffer[DATA_BUFFER_LENGTH];
+
+	if(payload_start != NULL) {
+
+		g_stpcpy(payload_buffer, payload_start + 4 * sizeof(gchar));
+		g_string_append(http_payload, payload_buffer);
+
+		ret_val = 1;
+	}
+
+	// g_free(payload_start);
+	// g_free(payload_buffer);
+	return ret_val;
+}
+
 int http_request_parse_queries(GHashTable *queries, gchar *http_uri) {
 
 	// first try to get anything in a query field 

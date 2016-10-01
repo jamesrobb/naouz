@@ -6,6 +6,7 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
     connection->request->cookies = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);
     connection->request->queries = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);
     connection->request->header_fields = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);
+    connection->request->payload = g_string_new("");
 
     GString *uri = NULL;
     GString *cookie_field = NULL;
@@ -26,6 +27,10 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
 		cookies_ret = http_request_parse_cookies(connection->request->cookies, cookie_field->str);
     }
 
+    if(header_ret == 0) {
+    	http_request_parse_payload(connection->request->payload, data_buffer);
+    }
+
     g_string_free(uri, TRUE);
     g_string_free(cookie_field, TRUE);
 
@@ -38,7 +43,8 @@ void reset_client_connection_http_request(client_connection *connection) {
     g_hash_table_destroy(connection->request->queries);
     g_hash_table_destroy(connection->request->header_fields);
     g_hash_table_destroy(connection->request->cookies);
-
+    g_string_free(connection->request->payload, TRUE);
+    
     free(connection->request);
 
     connection->request = NULL;
