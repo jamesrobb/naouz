@@ -28,7 +28,7 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
     }
 
     if(header_ret == 0) {
-    	//http_request_parse_payload(connection->request->payload, data_buffer);
+    	http_request_parse_payload(connection->request->payload, data_buffer);
     }
 
     g_string_free(uri, TRUE);

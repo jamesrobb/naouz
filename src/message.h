@@ -33,7 +33,7 @@ void build_http_body(GString *body, gchar *body_options, gchar *body_text);
 
 void build_http_document(GString *document, gchar *title, gchar *body);
 
-void build_http_header(GString *header, gchar *response_code, int payload_length); 
+void build_http_header(GString *header, gchar *response_code, int payload_length, GPtrArray *cookie_array); 
 
 void http_request_print(http_request *request);
 

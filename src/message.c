@@ -20,13 +20,26 @@ void build_http_document(GString *document, gchar *title, gchar *body) {
 
 }
 
-void build_http_header(GString *header, gchar *response_code, int payload_length) {
+void build_http_header(GString *header, gchar *response_code, int payload_length, GPtrArray *cookie_array) {
 
 	g_string_append_printf(header, "HTTP/1.1 %s%s", response_code, NEWLINE_DELIM);
     g_string_append_printf(header, "Connection: close%s", NEWLINE_DELIM);
     g_string_append_printf(header, "Server: naouz/%s%s", NAOUZ_VERSION, NEWLINE_DELIM);
     g_string_append_printf(header, "Accept-Ranges: bytes%s", NEWLINE_DELIM);
     g_string_append_printf(header, "Content-Type: text/html%s", NEWLINE_DELIM);
+
+    if(cookie_array != NULL) {
+    	GString *cookie_string = g_string_new("Set-Cookie: ");
+    	
+    	for(int i = 0; i < cookie_array->len; i+=2) {
+
+    		g_string_append_printf(cookie_string, "%s=%s;", (gchar *) cookie_array->pdata[i], (gchar *) cookie_array->pdata[i+1]);
+    	}
+
+    	g_string_append_printf(header, "%s%s", cookie_string->str, NEWLINE_DELIM);
+    	g_string_free(cookie_string, TRUE);
+    }
+
     g_string_append_printf(header, "Content-Length: %d%s%s", payload_length, NEWLINE_DELIM, NEWLINE_DELIM);
 
     return;
@@ -117,20 +130,32 @@ int http_request_parse_header(GHashTable *header_fields, char* data_buffer) {
 				// we get the http method, uri, and version
 				if(j == 0) {
 					val_set = TRUE;
+					// malloc 12 because it's the exact length of the key string
 					gchar *key = g_malloc(12);
-					g_stpcpy(key, "http_method\0");
+					g_stpcpy(key, "http_method");
 					g_hash_table_insert(header_fields, key, value);
 				}
 				if(j == 1) {
 					val_set = TRUE;
 					gchar *key = g_malloc(9);
-					g_stpcpy(key, "http_uri\0");
+					g_stpcpy(key, "http_uri");
+					gchar *path_key = g_malloc(9);
+					g_stpcpy(path_key, "uri_path");
+					
+					// we do this so we have a specific index in the hash table that only has the path
+					gchar **split_query_path = g_strsplit(value, REQUEST_URI_DELIM, 2);
+			
+					gchar *path_value = g_malloc(gchar_array_len(split_query_path[0]));
+					g_stpcpy(path_value, split_query_path[0]);
+
+					g_strfreev(split_query_path);
 					g_hash_table_insert(header_fields, key, value);
+					g_hash_table_insert(header_fields, path_key, path_value);
 				}
 				if(j == 2) {
 					val_set = TRUE;
 					gchar *key = g_malloc(13);
-					g_stpcpy(key, "http_version\0");
+					g_stpcpy(key, "http_version");
 					g_hash_table_insert(header_fields, key, value);
 				}
 
