@@ -35,6 +35,8 @@ void http_build_document(GString *document, gchar *title, gchar *body);
 
 void http_build_header(GString *header, gchar *response_code, int payload_length, GPtrArray *cookie_array);
 
+void http_request_get_hostname(GString *host_name, GHashTable *header_fields);
+
 void http_request_print(http_request *request);
 
 int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies);

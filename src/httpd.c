@@ -214,6 +214,9 @@ int main(int argc, char *argv[]) {
                     }
 
                     GString *response = g_string_new("");
+                    GString *host_name = g_string_new("");
+
+                    http_request_get_hostname(host_name, working_client_connection->request->header_fields);
 
                     if(parse_ret == 0) {
                         
@@ -232,17 +235,18 @@ int main(int argc, char *argv[]) {
 
                         g_string_free(uri_path, TRUE);
 
-                        httpd_log_access(inet_ntoa(client_addr.sin_addr),
-                                         ntohs(client_addr.sin_port),
-                                         g_hash_table_lookup(working_client_connection->request->header_fields, "http_method"),
-                                         g_hash_table_lookup(working_client_connection->request->header_fields, "http_uri"),
-                                         HTTP_STATUS_200);
-
                     } else {
                         // prasing the request yieled an error
 
                         build_bad_request_response(response);
                     }
+
+                    httpd_log_access(inet_ntoa(client_addr.sin_addr),
+                                         ntohs(client_addr.sin_port),
+                                         g_hash_table_lookup(working_client_connection->request->header_fields, "http_method"),
+                                         host_name->str,
+                                         g_hash_table_lookup(working_client_connection->request->header_fields, "http_uri"),
+                                         parse_ret == 0 ? HTTP_STATUS_200 : HTTP_STATUS_400);
 
 
                     reset_client_connection_http_request(working_client_connection);
@@ -252,7 +256,7 @@ int main(int argc, char *argv[]) {
                     }
 
                     g_string_free(response, TRUE);
-
+                    g_string_free(host_name, TRUE);
                 }
 
             }

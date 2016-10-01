@@ -27,7 +27,7 @@ void httpd_log_all_handler_cb (const gchar *log_domain,
 	// format a log message given the current time and log messaged passed to this function
 	GString *error_string = g_string_new(NULL);
 	g_string_printf(error_string,
-					"%d/%02d/%02d %02d:%02d:%02dZ %s: %s \n", 
+					"%02d-%02d-%02dT%02d:%02d:%02dZ %s: %s \n", 
 					g_date_time_get_year(now),
 					g_date_time_get_month(now),
 					g_date_time_get_day_of_month(now),
@@ -50,7 +50,8 @@ void httpd_log_all_handler_cb (const gchar *log_domain,
 
 void httpd_log_access(gchar *client_ip,
 					  int client_port, 
-					  gchar *req_method, 
+					  gchar *req_method,
+					  gchar *host_name,
 					  gchar* uri, 
 					  gchar *response_code) {
 
@@ -60,7 +61,7 @@ void httpd_log_access(gchar *client_ip,
 	// format a log message given the current time and log messaged passed to this function
 	GString *access_string = g_string_new(NULL);
 	g_string_printf(access_string,
-					"%d/%02d/%02d %02d:%02d:%02dZ %s:%d %s\n%s: %s\n", 
+					"%02d-%02d-%02dT%02d:%02d:%02dZ %s:%d %s\nhttp://%s%s: %s\n", 
 					g_date_time_get_year(now),
 					g_date_time_get_month(now),
 					g_date_time_get_day_of_month(now),
@@ -70,12 +71,14 @@ void httpd_log_access(gchar *client_ip,
 					client_ip,
 					client_port,
 					req_method,
+					host_name,
 					uri,
 					response_code);
 	
 	// print log message out to screen
 	g_print("%s", access_string->str);
 
+	g_string_append(access_string, "\n");
 	write_to_log_file(ACCESS_LOG_FILE_LOCATION, access_string);
 
 	g_date_time_unref(now);

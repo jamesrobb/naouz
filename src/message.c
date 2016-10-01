@@ -45,6 +45,20 @@ void http_build_header(GString *header, gchar *response_code, int payload_length
     return;
 }
 
+void http_request_get_hostname(GString *host_name, GHashTable *header_fields) {
+
+	if(g_hash_table_contains(header_fields, "Host") == TRUE) {
+
+		g_string_append(host_name, g_hash_table_lookup(header_fields, "Host"));
+
+	} else {
+
+		g_string_append(host_name, g_get_host_name());
+
+	}
+
+}
+
 void http_request_print(http_request *request) {
 	g_hash_table_foreach(request->header_fields, (GHFunc)ghash_table_strstr_iterator, "field: %s, value: %s\n");
 	return;
