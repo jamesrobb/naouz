@@ -34,3 +34,15 @@ void ghash_table_strstr_iterator(gpointer key, gpointer value, gpointer user_dat
 void ghash_table_gchar_destroy(gpointer value) {
 	g_free((gchar *) value);
 }
+
+// strips strip_char from the source and saves the stripped array to the destination.
+void gchar_char_strip(gchar *destination, gchar* source, gchar strip_char) {
+	int length = gchar_array_len(source);
+	int destpos = 0;
+	for(int i = 0; i < length; i++) {
+		if(source[i] != strip_char) {
+			destination[destpos] = source[i];
+			destpos++;
+		}
+	}
+}
