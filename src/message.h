@@ -19,6 +19,7 @@
 #define REQUEST_COOKIE_KEY_VALUE_DELIM ((gchar *) "=")
 
 #define HTTP_STATUS_200 	((gchar *) "200 OK")
+#define HTTP_STATUS_400 	((gchar *) "400 Bad Request")
 
 typedef struct _http_request
 {

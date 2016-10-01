@@ -20,6 +20,8 @@
 
 int master_listen_port = 0;
 
+void build_bad_request_response();
+
 void parse_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
 
 static GOptionEntry option_entries[] = {
@@ -212,18 +214,23 @@ int main(int argc, char *argv[]) {
                     GString *response = g_string_new("");
 
                     if(parse_ret == 0) {
-                        
+                        // parsing the request yieled no errors 
+
                         GString *uri = g_string_new(g_hash_table_lookup(working_client_connection->request->header_fields, "http_uri"));
 
                         // outputting query key/value pairs
                         //g_hash_table_foreach(working_client_connection->request->queries, (GHFunc)ghash_table_strstr_iterator, "QUERIES - key: %s, value: %s\n");
 
-                        if(g_strcmp0(uri->str, "/page") == 0) {
+                        if(g_strcmp0(uri->str, "/page?harro=1") == 0) {
                             parse_page_request(response, working_client_connection, uri->str, data_buffer);
                             g_info("trying to send 'page'");
                         }
 
                         g_string_free(uri, TRUE);
+                    } else {
+                        // prasing the request yieled an error
+
+                        build_bad_request_response(response);
                     }
 
 
@@ -265,6 +272,30 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
+void build_bad_request_response(GString *response) {
+
+    GString *header = g_string_new("");
+    GString *payload = g_string_new("");
+    GString *html_body = g_string_new("");
+    GString *body_text = g_string_new("400 Bad Request");
+    int payload_length = 0;
+
+    build_http_body(html_body, "", body_text->str);
+    build_http_document(payload, "NAOUZ - 400 Bad Request", html_body->str);
+    payload_length = payload->len;
+
+    build_http_header(header, HTTP_STATUS_400, payload_length);
+
+    g_string_append(response, header->str);
+    g_string_append(response, payload->str);
+
+    g_string_free(header, TRUE);
+    g_string_free(payload, TRUE);
+    g_string_free(html_body, TRUE);
+    g_string_free(body_text, TRUE);
+
+    return;
+}
 
 
 void parse_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer) {
@@ -298,7 +329,7 @@ void parse_page_request(GString *response, client_connection *connection, char* 
     if(g_strcmp0(method->str, "POST") == 0) {
 
         g_string_append_printf(body_text, "<br /><br />\n%s", connection->request->payload->str);
-        
+
     }
 
     if(g_strcmp0(method->str, "HEAD") != 0) {
