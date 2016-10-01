@@ -42,9 +42,16 @@ int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
 		// got to split by semi colons
 	gchar **cookie_split = g_strsplit(http_cookies, REQUEST_COOKIE_DELIM, 0);
 	int cookie_counter = 0;
+
 	while(cookie_split[cookie_counter]) {
 		// split by equals sign 
 		gchar **split_key_values = g_strsplit(cookie_split[cookie_counter], REQUEST_COOKIE_KEY_VALUE_DELIM, 2);
+
+		// currently ignores garbage cookie data, might need to come back to this so it returns an error (and therefore we recognize a bad request)
+		if(g_strv_length(split_key_values) == 0) {
+			g_strfreev(split_key_values);
+			continue;
+		}
 
 		gchar *key;
 		gchar *value;
@@ -79,8 +86,8 @@ int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
 		g_strfreev(split_key_values);
 		cookie_counter++;
 	}
+
 	g_strfreev(cookie_split);
-	
 	return 0;
 }
 
