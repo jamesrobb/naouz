@@ -47,9 +47,9 @@ void http_build_header(GString *header, gchar *response_code, int payload_length
 
 void http_request_get_hostname(GString *host_name, GHashTable *header_fields) {
 
-	if(g_hash_table_contains(header_fields, "Host") == TRUE) {
+	if(g_hash_table_contains(header_fields, "host") == TRUE) {
 
-		g_string_append(host_name, g_hash_table_lookup(header_fields, "Host"));
+		g_string_append(host_name, g_hash_table_lookup(header_fields, "host"));
 
 	} else {
 
@@ -196,7 +196,8 @@ int http_request_parse_header(GHashTable *header_fields, char* data_buffer) {
 
 			if(current_line[0] && current_line[1]) {
 
-				gchar *key = g_malloc(gchar_array_len(current_line[0]));
+				// g_aciii_strdown allocates a new string in addition to making the ascii characters lowercase
+				gchar *key = g_ascii_strdown(current_line[0], gchar_array_len(current_line[0]));
 				g_stpcpy(key, current_line[0]);
 
 				gchar *value = g_malloc(gchar_array_len(current_line[1]));
