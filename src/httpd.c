@@ -21,6 +21,7 @@
 int master_listen_port = 0;
 
 void parse_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
+void parse_colour_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
 
 static GOptionEntry option_entries[] = {
   { "port", 'p', 0, G_OPTION_ARG_INT, &master_listen_port, "port to listen for connection on", "N" },
@@ -223,6 +224,11 @@ int main(int argc, char *argv[]) {
                             g_info("trying to send 'page'");
                         }
 
+                        if(g_strcmp0(uri->str, "/color") == 0) {
+                            parse_colour_page_request(response, working_client_connection, uri->str, data_buffer);
+                            g_info("trying to send 'color'");
+                        }
+
                         g_string_free(uri, TRUE);
                     }
 
@@ -264,6 +270,27 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
+
+void parse_colour_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer) {
+
+    GString *colour;
+
+    GString *method = g_string_new(g_hash_table_lookup(connection->request->header_fields, "http_method"));
+    GString *header = g_string_new("");
+    GString *payload = g_string_new("");
+    GString *html_body = g_string_new("");
+    GString *body_text = g_string_new("");
+
+    int payload_length = 0;
+
+    if(g_hash_table_contains(connection->request->queries, "colour")){
+        colour = g_hash_table_lookup(connection->request->queries, "colour");
+    }
+    else if(g_hash_table_contains(connection->request->cookies, "colour")){
+        colour = g_hash_table_lookup(connection->request->cookies, "colour");
+    }
+
+}
 
 
 void parse_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer) {
