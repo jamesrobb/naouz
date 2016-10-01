@@ -260,6 +260,7 @@ int main(int argc, char *argv[]) {
         // close(connfd);
     }
 
+    shutdown(master_socket, SHUT_RDWR);
     close(master_socket);
 	return 0;
 }
@@ -284,8 +285,8 @@ void parse_page_request(GString *response, client_connection *connection, char* 
 
     getpeername(connection->fd, (struct sockaddr*)&connection_addr , (socklen_t*)&connection_addr_len);
 
+    if(g_strcmp0(method->str, "GET") == 0 || g_strcmp0(method->str, "POST") == 0) {
 
-    if(g_strcmp0(method->str, "GET") == 0) {
         g_string_append_printf(body_text,
                                "http://%s%s %s:%d", 
                                g_get_host_name(),
@@ -295,42 +296,23 @@ void parse_page_request(GString *response, client_connection *connection, char* 
     }
 
     if(g_strcmp0(method->str, "POST") == 0) {
-        g_string_append_printf(body_text, "\n\n%s", data_buffer);
+
+        g_string_append_printf(body_text, "<br /><br />\n%s", connection->request->payload->str);
+        
     }
 
-    build_http_body(html_body, "", body_text->str);
-    build_http_document(payload, "NAOUZ! query page :)", html_body->str);
-    payload_length = payload->len;
+    if(g_strcmp0(method->str, "HEAD") != 0) {
+
+        build_http_body(html_body, "", body_text->str);
+        build_http_document(payload, "NAOUZ! query page :)", html_body->str);
+        payload_length = payload->len;
+
+    }
 
     build_http_header(header, HTTP_STATUS_200, payload_length);
 
     g_string_append(response, header->str);
     g_string_append(response, payload->str);
-
-    if(g_strcmp0(method->str, "GET") == 0) {
-
-        getpeername(connection->fd, (struct sockaddr*)&connection_addr , (socklen_t*)&connection_addr_len);
-
-        g_string_append_printf(body_text,
-                               "http://%s%s %s:%d", 
-                               g_get_host_name(),
-                               uri,
-                               inet_ntoa(connection_addr.sin_addr), 
-                               ntohs(connection_addr.sin_port));
-        build_http_body(html_body, "", body_text->str);
-        build_http_document(payload, "NAOUZ! query page :)", html_body->str);
-        payload_length = payload->len;
-
-        build_http_header(header, HTTP_STATUS_200, payload_length);
-
-        g_string_append(response, header->str);
-        g_string_append(response, payload->str);
-
-    } else if (g_strcmp0(method->str, "POST") == 0) {
-
-        //g_string_append(body_text
-
-    }
 
     g_string_free(method, TRUE);
     g_string_free(header, TRUE);
