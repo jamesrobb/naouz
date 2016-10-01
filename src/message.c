@@ -208,8 +208,8 @@ int http_request_parse_header(GHashTable *header_fields, char* data_buffer) {
 			if(current_line[0] && current_line[1]) {
 
 				// g_aciii_strdown allocates a new string in addition to making the ascii characters lowercase
-				gchar *key = g_ascii_strdown(current_line[0], gchar_array_len(current_line[0]));
-				g_stpcpy(key, current_line[0]);
+				gchar *key = g_ascii_strdown(current_line[0], -1);
+				//g_stpcpy(key, current_line[0]);
 
 				gchar *value = g_malloc(gchar_array_len(current_line[1]));
 				g_stpcpy(value, current_line[1]);

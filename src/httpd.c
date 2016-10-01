@@ -24,7 +24,7 @@ void build_bad_request_response();
 
 void parse_colour_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
 
-void parse_generic_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
+void parse_generic_page_request(GString *response, client_connection *connection, gchar *host_name, gchar* uri, char* data_buffer);
 
 void parse_header_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
 
@@ -255,19 +255,14 @@ int main(int argc, char *argv[]) {
                         // outputting query key/value pairs
                         //g_hash_table_foreach(working_client_connection->request->queries, (GHFunc)ghash_table_strstr_iterator, "QUERIES - key: %s, value: %s\n");
 
-                        if(g_strcmp0(uri_path->str, "/page") == 0) {
-                            parse_generic_page_request(response, working_client_connection, uri_path->str, data_buffer);
-                            g_info("trying to send 'page'");
-                        }
-
                         if(g_strcmp0(uri_path->str, "/colour") == 0) {
                             parse_colour_page_request(response, working_client_connection, uri_path->str, data_buffer);
                             g_info("trying to send 'colour'");
-			} else if(g_strcmp0(uri_path->str, "/headers") == 0) {
-			    parse_header_page_request(response, working_client_connection, uri_path->str, data_buffer);
+                        } else if(g_strcmp0(uri_path->str, "/headers") == 0) {
+                            parse_header_page_request(response, working_client_connection, uri_path->str, data_buffer);
                             g_info("trying to send a 'headers'");
                         } else {
-                            parse_generic_page_request(response, working_client_connection, uri_path->str, data_buffer);
+                            parse_generic_page_request(response, working_client_connection, host_name->str, uri_path->str, data_buffer);
                             g_info("trying to send 'page'");
                         }
 
@@ -438,7 +433,7 @@ void parse_colour_page_request(GString *response, client_connection *connection,
 }
 
 
-void parse_generic_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer) {
+void parse_generic_page_request(GString *response, client_connection *connection, gchar *host_name, gchar* uri, char* data_buffer) {
 
     GString *method = g_string_new(g_hash_table_lookup(connection->request->header_fields, "http_method"));
     GString *header = g_string_new("");
@@ -460,7 +455,7 @@ void parse_generic_page_request(GString *response, client_connection *connection
 
         g_string_append_printf(body_text,
                                "http://%s%s %s:%d", 
-                               g_get_host_name(),
+                               host_name,
                                uri,
                                inet_ntoa(connection_addr.sin_addr), 
                                ntohs(connection_addr.sin_port));
