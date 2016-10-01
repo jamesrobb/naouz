@@ -17,4 +17,6 @@ void ghash_table_gchar_destroy(gpointer value);
 
 void gchar_char_strip(gchar *destination, gchar* source, gchar strip_char);
 
+void gstring_fill_with_header(gchar* key, gchar* val, GString *string_fill);
+
 #endif

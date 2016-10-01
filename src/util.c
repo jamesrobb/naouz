@@ -46,3 +46,10 @@ void gchar_char_strip(gchar *destination, gchar* source, gchar strip_char) {
 		}
 	}
 }
+
+void gstring_fill_with_header(gchar* key, gchar* val, GString *string_fill) {
+	if(g_strcmp0(key, "http_uri") == 0 || g_strcmp0(key, "uri_path") == 0 || g_strcmp0(key, "http_method") == 0 || g_strcmp0(key, "http_version") == 0) {
+		return;
+	}
+	g_string_append_printf(string_fill, "%s: %s<br />", key, val);
+}
