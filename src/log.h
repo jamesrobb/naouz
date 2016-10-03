@@ -5,8 +5,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define DEBUG_LOG_FILE_LOCATION		((gchar*) "debug.log")
-#define ACCESS_LOG_FILE_LOCATION 	((gchar*) "access.log")
+#include "constants.h"
 
 const gchar * log_level_to_string (GLogLevelFlags level);
 
