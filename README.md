@@ -1,6 +1,8 @@
 # naouz - A Simple HTTP Server
 
-naouz is a simple http server written in c.
+naouz is a simple http server written in c. This was written for a computer networking assignment at Reykjavik University.
+
+The server makes the assumption that it can read what a particular client is sending it in one `recv()` call. The limit on how many bytes that is, is a constant set in `constants.h`.
 
 # Requirements
 
@@ -33,3 +35,9 @@ Both log files are will be populated in the directory the executable is run in.
 
 * debug.log - debugging information about naouz during execution
 * access.log - information about end points requested, http status, and requesting client
+
+# Fairness
+
+naouz is relatively "fair" when serving its clients. The server uses `select()` to handle incoming connections and requests. Once `select()` populates an `fd_set` of file descriptors to work with, the server loops through them and responds to all of the requests before checking for more incoming connections and requests. This means that a client usually is not served again before all other requests known at that time are served.
+
+To make naouz more fair, it would be possible to check the ip address of the incoming connections such that a subsequent request with the same ip address as an already received request would not be served until all other requests known at that time had been served first. This would prevent a host from using multiple parallel connections to receive more time from the server than other hosts.
