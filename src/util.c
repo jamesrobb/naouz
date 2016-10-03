@@ -26,8 +26,8 @@ int gchar_array_array_len(gchar **arr) {
 	return len;
 }
 
-void ghash_table_strstr_iterator(gpointer key, gpointer value, gpointer user_data) {
-	g_print(user_data, (gchar*) key, (gchar*) value);
+void ghash_table_strstr_iterator(gpointer key, gpointer value, G_GNUC_UNUSED gpointer user_data) {
+	g_print("field: %s, value: %s\n", (gchar*) key, (gchar*) value);
 	return;
 }
 

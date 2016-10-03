@@ -80,7 +80,7 @@ void http_request_get_hostname(GString *host_name, GHashTable *header_fields) {
 }
 
 void http_request_print(http_request *request) {
-	g_hash_table_foreach(request->header_fields, (GHFunc)ghash_table_strstr_iterator, "field: %s, value: %s\n");
+	g_hash_table_foreach(request->header_fields, (GHFunc)ghash_table_strstr_iterator, NULL);
 	return;
 }
 

@@ -11,7 +11,7 @@ int gchar_array_len(gchar *arr);
 
 int gchar_array_array_len(gchar **arr);
 
-void ghash_table_strstr_iterator(gpointer key, gpointer value, gpointer user_data);
+void ghash_table_strstr_iterator(gpointer key, gpointer value, G_GNUC_UNUSED gpointer user_data);
 
 void ghash_table_gchar_destroy(gpointer value);
 

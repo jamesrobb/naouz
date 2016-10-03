@@ -16,10 +16,10 @@ const gchar * log_level_to_string (GLogLevelFlags level) {
 	return "UNKNOWN";
 }
 
-void httpd_log_all_handler_cb (const gchar *log_domain, 
+void httpd_log_all_handler_cb (G_GNUC_UNUSED const gchar *log_domain, 
 						       GLogLevelFlags log_level,
 						       const gchar *message,
-						       gpointer user_data) {
+						       G_GNUC_UNUSED gpointer user_data) {
 
 	// we get the current time
 	GDateTime *now = g_date_time_new_now_utc();
