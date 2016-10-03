@@ -31,12 +31,11 @@ void http_build_document(GString *document, gchar *title, gchar *body) {
 
 }
 
-void http_build_header(GString *header, gchar *response_code, GPtrArray *cookie_array, int payload_length, gboolean keep_alive) {
+void http_build_header(GString *header, gchar *response_code, gchar *content_type, GPtrArray *cookie_array, int payload_length, gboolean keep_alive) {
 
 	g_string_append_printf(header, "HTTP/1.1 %s%s", response_code, NEWLINE_DELIM);
     g_string_append_printf(header, "Server: naouz/%s%s", NAOUZ_VERSION, NEWLINE_DELIM);
-    g_string_append_printf(header, "Accept-Ranges: bytes%s", NEWLINE_DELIM);
-    g_string_append_printf(header, "Content-Type: text/html%s", NEWLINE_DELIM);
+    g_string_append_printf(header, "Content-Type: %s%s", content_type, NEWLINE_DELIM);
 
     if(keep_alive == FALSE) {
     	g_string_append_printf(header, "Connection: close%s", NEWLINE_DELIM);

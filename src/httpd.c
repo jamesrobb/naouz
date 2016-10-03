@@ -231,10 +231,6 @@ int main(int argc, char *argv[]) {
                     // parse the http request (also allocates all the needed objects). zero indicates success
                     int parse_ret = parse_client_http_request(working_client_connection, data_buffer);
 
-                    if(parse_ret == 0) {
-                        http_request_print(working_client_connection->request);
-                    }
-
                     GString *response = g_string_new("");
                     GString *host_name = g_string_new("");
 
@@ -243,9 +239,6 @@ int main(int argc, char *argv[]) {
                     if(parse_ret == 0) {
                         
                         gchar *uri_path = g_hash_table_lookup(working_client_connection->request->header_fields, "uri_path");
-
-                        // outputting query key/value pairs
-                        //g_hash_table_foreach(working_client_connection->request->queries, (GHFunc)ghash_table_strstr_iterator, "QUERIES - key: %s, value: %s\n");
 
                         if(g_strcmp0(uri_path, "/colour") == 0) {
 
@@ -261,6 +254,11 @@ int main(int argc, char *argv[]) {
 
                             parse_queries_page_request(response, working_client_connection, host_name->str, uri_path);
                             g_info("sending 'queries' page");
+
+                        } else if(g_strcmp0(uri_path, "/favicon.ico") == 0) {
+
+                            parse_favicon_request(response, working_client_connection);
+                            g_info("sending 'favicon.ico'");
 
                         } else {
 

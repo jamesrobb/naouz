@@ -12,7 +12,7 @@ void build_bad_request_response(GString *response) {
     http_build_document(payload, "NAOUZ - 400 Bad Request", html_body->str);
     payload_length = payload->len;
 
-    http_build_header(header, HTTP_STATUS_400, NULL, payload_length, TRUE);
+    http_build_header(header, HTTP_STATUS_400, "text/html", NULL, payload_length, TRUE);
 
     g_string_append(response, header->str);
     g_string_append(response, payload->str);
@@ -21,6 +21,53 @@ void build_bad_request_response(GString *response) {
     g_string_free(payload, TRUE);
     g_string_free(html_body, TRUE);
     g_string_free(body_text, TRUE);
+
+    return;
+}
+
+void parse_favicon_request(GString *response, client_connection *connection) {
+
+	GString *method = g_string_new(g_hash_table_lookup(connection->request->header_fields, "http_method"));
+    GString *header = g_string_new("");
+    char *payload = NULL;
+    long int payload_length = 0;
+
+    if(g_strcmp0(method->str, "GET") == 0) {
+
+    	FILE *f = fopen(FAVICON_LOCATION, "rb");
+
+    	if(f != NULL) {
+
+    		fseek(f, 0, SEEK_END);
+			long f_size = ftell(f);
+			fseek(f, 0, SEEK_SET);
+
+			payload = malloc(f_size + 1);
+			long int bytes_read = fread(payload, 1, f_size, f);
+			payload[f_size] = 0;
+
+			if(bytes_read > 0) {
+	    		payload_length = bytes_read;
+    		}
+
+    	} else {
+    		g_warning("failed to open favicon.ico");
+    	}
+        
+        fclose(f);
+    }
+    
+    http_build_header(header, HTTP_STATUS_200, "image/x-icon", NULL, payload_length, connection->keep_alive);
+
+    g_string_append(response, header->str);
+
+    for(int i = 0; i < payload_length; i++) {
+    	g_string_append_c(response, (gchar) payload[i]);
+    }
+
+    free(payload);
+    g_string_free(method, TRUE);
+    g_string_free(header, TRUE);
 
     return;
 }
@@ -39,13 +86,14 @@ void parse_header_page_request(GString *response, client_connection *connection,
     if(g_strcmp0(method->str, "POST") == 0) {
         g_string_append_printf(body_text, "<br /><br />%s", connection->request->payload->str);
     }
+
     if(g_strcmp0(method->str, "HEAD") != 0) {
         http_build_body(html_body, "", body_text->str);
         http_build_document(payload, "NAOUZ! headers page :)", html_body->str);
         payload_length = payload->len;
     }
     
-    http_build_header(header, HTTP_STATUS_200, NULL, payload_length, connection->keep_alive);
+    http_build_header(header, HTTP_STATUS_200, "text/html", NULL, payload_length, connection->keep_alive);
     g_string_append(response, header->str);
     g_string_append(response, payload->str);
 
@@ -94,7 +142,7 @@ void parse_colour_page_request(GString *response, client_connection *connection,
         payload_length = payload->len;
     }
     
-    http_build_header(header, HTTP_STATUS_200, cookie_array, payload_length, connection->keep_alive);
+    http_build_header(header, HTTP_STATUS_200, "text/html", cookie_array, payload_length, connection->keep_alive);
 
     g_string_append(response, header->str);
     g_string_append(response, payload->str);
@@ -152,7 +200,7 @@ void parse_generic_page_request(GString *response, client_connection *connection
 
     }
 
-    http_build_header(header, HTTP_STATUS_200, NULL, payload_length, connection->keep_alive);
+    http_build_header(header, HTTP_STATUS_200, "text/html", NULL, payload_length, connection->keep_alive);
 
     g_string_append(response, header->str);
     g_string_append(response, payload->str);
@@ -208,7 +256,7 @@ void parse_queries_page_request(GString *response, client_connection *connection
 
     }
 
-    http_build_header(header, HTTP_STATUS_200, NULL, payload_length, connection->keep_alive);
+    http_build_header(header, HTTP_STATUS_200, "text/html", NULL, payload_length, connection->keep_alive);
 
     g_string_append(response, header->str);
     g_string_append(response, payload->str);

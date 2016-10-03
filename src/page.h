@@ -6,10 +6,13 @@
 #include <netinet/in.h>
 #include <string.h>
 
+#include "constants.h"
 #include "client_connection.h"
 #include "message.h"
 
 void build_bad_request_response();
+
+void parse_favicon_request(GString *response, client_connection *connection);
 
 void parse_colour_page_request(GString *response, client_connection *connection, gchar* uri);
 

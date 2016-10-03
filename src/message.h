@@ -38,7 +38,7 @@ void http_build_body(GString *body, gchar *body_options, gchar *body_text);
 
 void http_build_document(GString *document, gchar *title, gchar *body);
 
-void http_build_header(GString *header, gchar *response_code, GPtrArray *cookie_array, int payload_length, gboolean keep_alive);
+void http_build_header(GString *header, gchar *response_code, gchar *content_type, GPtrArray *cookie_array, int payload_length, gboolean keep_alive);
 
 void http_request_get_hostname(GString *host_name, GHashTable *header_fields);
 
