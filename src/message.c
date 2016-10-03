@@ -36,7 +36,7 @@ void http_build_header(GString *header, gchar *response_code, GPtrArray *cookie_
     	GString *cookie_string = g_string_new("Set-Cookie: ");
     	
     	for(int i = 0; i < cookie_array->len; i+=2) {
-    		if(cookie_array->pdata[i+1]) {
+    		if(cookie_array->pdata[i+1] != NULL) {
     			g_string_append_printf(cookie_string, "%s=%s;", (gchar *) cookie_array->pdata[i], (gchar *) cookie_array->pdata[i+1]);
     		}
     		else {
@@ -78,7 +78,12 @@ int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
 	gchar **cookie_split = g_strsplit(http_cookies, REQUEST_COOKIE_DELIM, 0);
 	int cookie_counter = 0;
 
-	while(g_strcmp0(cookie_split[cookie_counter], "") != 0) {
+	while(cookie_split[cookie_counter]) {
+
+		if(g_strcmp0(cookie_split[cookie_counter], "") == 0) {
+			break;
+		}
+
 		// split by equals sign 
 		gchar **split_key_values = g_strsplit(cookie_split[cookie_counter], REQUEST_COOKIE_KEY_VALUE_DELIM, 2);
 

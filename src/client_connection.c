@@ -71,7 +71,7 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
     if(g_hash_table_contains(connection->request->header_fields, "cookie") == TRUE && header_ret == 0) {
 
 		g_string_append(cookie_field, g_hash_table_lookup(connection->request->header_fields, "cookie"));
-		//cookies_ret = http_request_parse_cookies(connection->request->cookies, cookie_field->str);
+		cookies_ret = http_request_parse_cookies(connection->request->cookies, cookie_field->str);
     }
 
     if(header_ret == 0) {
