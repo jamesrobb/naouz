@@ -362,16 +362,19 @@ void parse_header_page_request(GString *response, client_connection *connection,
 
     g_hash_table_foreach(connection->request->header_fields, (GHFunc) gstring_fill_with_header, body_text);
 
-    g_info("function check %s", body_text->str);
-
-    http_build_body(html_body, "", body_text->str);
-    http_build_document(payload, "NAOUZ! colour page :)", html_body->str);
-
-    payload_length = payload->len;
+    if(g_strcmp0(method->str, "POST") == 0) {
+        g_string_append_printf(body_text, "<br /><br />%s", connection->request->payload->str);
+    }
+    if(g_strcmp0(method->str, "HEAD") != 0) {
+        http_build_body(html_body, "", body_text->str);
+        http_build_document(payload, "NAOUZ! headers page :)", html_body->str);
+        payload_length = payload->len;
+    }
+    
     http_build_header(header, HTTP_STATUS_200, NULL, payload_length, connection->keep_alive);
-
     g_string_append(response, header->str);
     g_string_append(response, payload->str);
+
 
     g_string_free(method, TRUE);
     g_string_free(header, TRUE);
@@ -395,28 +398,28 @@ void parse_colour_page_request(GString *response, client_connection *connection,
 
     int payload_length = 0;
     
-    if(g_hash_table_contains(connection->request->queries, "colour")) {
-        gchar *key = "colour";
-        colour = g_hash_table_lookup(connection->request->queries, "colour");
+    if(g_hash_table_contains(connection->request->queries, "bg")) {
+        gchar *key = "bg";
+        colour = g_hash_table_lookup(connection->request->queries, "bg");
         
         g_ptr_array_add(cookie_array, key);
         g_ptr_array_add(cookie_array, colour);
     }
-    else if(g_hash_table_contains(connection->request->cookies, "colour")) {
-
-        colour = g_hash_table_lookup(connection->request->cookies, "colour");
+    else if(g_hash_table_contains(connection->request->cookies, "bg")) {
+        colour = g_hash_table_lookup(connection->request->cookies, "bg");
     }
-
 
     g_string_append_printf(body_options, "style=\"background-color:%s\"", colour);
 
     if(g_strcmp0(method->str, "POST") == 0) {
         g_string_append_printf(body_text, "<br><br>%s", connection->request->payload->str);
     }
-    http_build_body(html_body, body_options->str, body_text->str);
-    http_build_document(payload, "NAOUZ! colour page :)", html_body->str);
-
-    payload_length = payload->len;
+    if(g_strcmp0(method->str, "HEAD") != 0) {
+        http_build_body(html_body, body_options->str, body_text->str);
+        http_build_document(payload, "NAOUZ! colour page :)", html_body->str);
+        payload_length = payload->len;
+    }
+    
     http_build_header(header, HTTP_STATUS_200, cookie_array, payload_length, connection->keep_alive);
 
     g_string_append(response, header->str);
