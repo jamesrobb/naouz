@@ -17,8 +17,12 @@
 #include "log.h"
 #include "message.h"
 
-
 int master_listen_port = 0;
+
+static GOptionEntry option_entries[] = {
+  { "port", 'p', 0, G_OPTION_ARG_INT, &master_listen_port, "port to listen for connection on", "N" },
+  { NULL }
+};
 
 void build_bad_request_response();
 
@@ -27,11 +31,6 @@ void parse_colour_page_request(GString *response, client_connection *connection,
 void parse_generic_page_request(GString *response, client_connection *connection, gchar *host_name, gchar* uri, char* data_buffer);
 
 void parse_header_page_request(GString *response, client_connection *connection, char* uri, char* data_buffer);
-
-static GOptionEntry option_entries[] = {
-  { "port", 'p', 0, G_OPTION_ARG_INT, &master_listen_port, "port to listen for connection on", "N" },
-  { NULL }
-};
 
 int main(int argc, char *argv[]) {
 
@@ -68,15 +67,15 @@ int main(int argc, char *argv[]) {
     // begin setting up the server
     int master_socket;
     int new_socket;
-    client_connection *clients[MAX_CLIENT_CONNS];
-    client_connection *working_client_connection; // client connecting we are currently dealing with
     int client_addr_len;
     int select_activity;
     int incoming_sd_max; // max socket (file) descriptor for incoming connections
-    struct sockaddr_in server_addr, client_addr;
-    char data_buffer[DATA_BUFFER_LENGTH];
     fd_set incoming_fds;
+    char data_buffer[DATA_BUFFER_LENGTH];
+    struct sockaddr_in server_addr, client_addr;
     struct timeval select_timeout = {1, 0}; // 1 second
+    client_connection *clients[MAX_CLIENT_CONNS];
+    client_connection *working_client_connection; // client connecting we are currently dealing with
 
     // we initialize clients sockect fds
     for(int i = 0; i < MAX_CLIENT_CONNS; i++) {
