@@ -191,7 +191,6 @@ int main(int argc, char *argv[]) {
             if(time(NULL) - working_client_connection->last_activity >= CONNECTION_TIMEOUT) {
 
                 g_info("detected timeout on fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-                
                 working_client_connection->close = TRUE;
 
             }
@@ -300,23 +299,6 @@ int main(int argc, char *argv[]) {
         }
 
 
-        // /* We first have to accept a TCP connection, connfd is a fresh
-        //    handle dedicated to this connection. */
-        // socklen_t len = (socklen_t) sizeof(client_addr);
-        // int connfd = accept(master_socket, (struct sockaddr *) &client_addr, &len);
-
-        // /* Receive from connfd, not sockfd. */
-        // ssize_t n = recv(connfd, buffer, sizeof(buffer) - 1, 0);
-
-        // buffer[n] = '\0';
-        // fprintf(stdout, "Received:\n%s\n", buffer);
-
-        // /* Send the message back. */
-        // send(connfd, buffer, (size_t) n, 0);
-
-        // /* Close the connection. */
-        // shutdown(connfd, SHUT_RDWR);
-        // close(connfd);
     }
 
     shutdown(master_socket, SHUT_RDWR);
