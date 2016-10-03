@@ -14,11 +14,11 @@ void build_bad_request_response();
 
 void parse_favicon_request(GString *response, client_connection *connection);
 
-void parse_colour_page_request(GString *response, client_connection *connection, gchar* uri);
+void parse_colour_page_request(GString *response, client_connection *connection);
 
 void parse_generic_page_request(GString *response, client_connection *connection, gchar *host_name, gchar *uri);
 
-void parse_header_page_request(GString *response, client_connection *connection, gchar *uri);
+void parse_header_page_request(GString *response, client_connection *connection);
 
 void parse_queries_page_request(GString *response, client_connection *connection, gchar *host_name, gchar *uri);
 

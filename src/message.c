@@ -26,8 +26,10 @@ void http_build_body(GString *body, gchar *body_options, gchar *body_text) {
 
 void http_build_document(GString *document, gchar *title, gchar *body) {
 
-	gchar *format = "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<title>%s</title>\n</head>\n\n%s\n\n</html>";
-	g_string_append_printf(document, format, title, body);
+	g_string_append_printf(document,
+						   "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<title>%s</title>\n</head>\n\n%s\n\n</html>", 
+						   title, 
+						   body);
 
 }
 
@@ -45,7 +47,7 @@ void http_build_header(GString *header, gchar *response_code, gchar *content_typ
     if(cookie_array != NULL) {
     	GString *cookie_string = g_string_new("Set-Cookie: ");
     	
-    	for(int i = 0; i < cookie_array->len; i+=2) {
+    	for(unsigned int i = 0; i < cookie_array->len; i+=2) {
     		if(cookie_array->pdata[i+1] != NULL) {
     			g_string_append_printf(cookie_string, "%s=%s;", (gchar *) cookie_array->pdata[i], (gchar *) cookie_array->pdata[i+1]);
     		}

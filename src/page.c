@@ -72,7 +72,7 @@ void parse_favicon_request(GString *response, client_connection *connection) {
     return;
 }
 
-void parse_colour_page_request(GString *response, client_connection *connection, gchar* uri) {
+void parse_colour_page_request(GString *response, client_connection *connection) {
 
     gchar *colour = "";
     GString *method = g_string_new(g_hash_table_lookup(connection->request->header_fields, "http_method"));
@@ -179,7 +179,7 @@ void parse_generic_page_request(GString *response, client_connection *connection
     return;
 }
 
-void parse_header_page_request(GString *response, client_connection *connection, gchar* uri) {
+void parse_header_page_request(GString *response, client_connection *connection) {
     GString *method = g_string_new(g_hash_table_lookup(connection->request->header_fields, "http_method"));
     GString *header = g_string_new("");
     GString *payload = g_string_new("");

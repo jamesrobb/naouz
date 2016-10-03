@@ -1,7 +1,7 @@
 CC = gcc
 CPPFLAGS =
-CFLAGS = -std=c11 -D_XOPEN_SOURCE=700 -O2 -Wall
-#CFLAGS = -std=c11 -D_XOPEN_SOURCE=700 -O2 -Wall -Wextra -Wformat=2
+#CFLAGS = -std=c11 -D_XOPEN_SOURCE=700 -O2 -Wall
+CFLAGS = -std=c11 -D_XOPEN_SOURCE=700 -O2 -Wall -Wextra -Wformat=2
 CFLAGS += `pkg-config --cflags glib-2.0`
 OBJFLAGS = -c
 LDFLAGS =
@@ -13,7 +13,7 @@ LDLIBS = `pkg-config --libs glib-2.0`
 all: httpd
 
 httpd: httpd.o client_connection.o page.o message.o util.o log.o
-	$(CC) $(CFLAGS) httpd.o client_connection.o page.o message.o util.o log.o -o httpd $(LDLIBS)
+	$(CC) $(CFLAGS) httpd.o client_connection.o page.o message.o util.o log.o -o httpd $(LDLIBS) $(LDFLAGS)
 
 httpd.o: httpd.c
 	$(CC) $(OBJFLAGS) $(CFLAGS) httpd.c

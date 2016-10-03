@@ -242,12 +242,12 @@ int main(int argc, char *argv[]) {
 
                         if(g_strcmp0(uri_path, "/colour") == 0) {
 
-                            parse_colour_page_request(response, working_client_connection, uri_path);
+                            parse_colour_page_request(response, working_client_connection);
                             g_info("sending 'colour' page");
 
                         } else if(g_strcmp0(uri_path, "/headers") == 0) {
 
-                            parse_header_page_request(response, working_client_connection, uri_path);
+                            parse_header_page_request(response, working_client_connection);
                             g_info("sending 'headers' page");
 
                         } else if(g_strcmp0(uri_path, "/test") == 0) {
@@ -282,7 +282,7 @@ int main(int argc, char *argv[]) {
 
                     reset_client_connection_http_request(working_client_connection);
 
-                    if(send(working_client_connection->fd, response->str, response->len, 0) != response->len){
+                    if(send(working_client_connection->fd, response->str, response->len, 0) != (int) response->len){
                         g_critical("failed to send() welcome message on socket fd %d, ip %s, port %d", working_client_connection->fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
                     }
 
