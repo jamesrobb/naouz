@@ -6,9 +6,9 @@
 #define DATA_BUFFER_LENGTH  		77056 // 64KB
 #define CONN_FREE           		-1
 #define NAOUZ_VERSION       		((gchar *) "0.2")
-#define FAVICON_LOCATION			((gchar *) "../favicon.ico")
+#define FAVICON_LOCATION			((gchar *) "./favicon.ico")
 #define CONNECTION_TIMEOUT			5
-#define DEBUG_LOG_FILE_LOCATION		((gchar*) "../debug.log")
-#define ACCESS_LOG_FILE_LOCATION 	((gchar*) "../access.log")
+#define DEBUG_LOG_FILE_LOCATION		((gchar*) "./debug.log")
+#define ACCESS_LOG_FILE_LOCATION 	((gchar*) "./access.log")
 
 #endif
