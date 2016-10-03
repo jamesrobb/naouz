@@ -30,6 +30,10 @@ typedef struct _http_request
 
 } http_request;
 
+void g_string_fill_with_http_headers(gchar* key, gchar* val, GString *string_fill);
+
+void g_string_fill_with_http_queries(gchar* key, gchar* val, GString *string_fill);
+
 void http_build_body(GString *body, gchar *body_options, gchar *body_text);
 
 void http_build_document(GString *document, gchar *title, gchar *body);

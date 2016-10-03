@@ -1,5 +1,16 @@
 #include "message.h"
 
+void g_string_fill_with_http_headers(gchar* key, gchar* val, GString *string_fill) {
+	if(g_strcmp0(key, "http_uri") == 0 || g_strcmp0(key, "uri_path") == 0 || g_strcmp0(key, "http_method") == 0 || g_strcmp0(key, "http_version") == 0) {
+		return;
+	}
+	g_string_append_printf(string_fill, "%s: %s<br />", key, val);
+}
+
+void g_string_fill_with_http_queries(gchar* key, gchar* val, GString *string_fill) {
+	g_string_append_printf(string_fill, "%s: %s<br />", key, val);
+}
+
 void http_build_body(GString *body, gchar *body_options, gchar *body_text) {
 
 	if(g_strcmp0(body_options, "") == 0) {
@@ -73,8 +84,9 @@ void http_request_print(http_request *request) {
 }
 
 int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
+	
 	g_info("parsing cookies");
-		// got to split by semi colons
+	// got to split by semi colons
 	gchar **cookie_split = g_strsplit(http_cookies, REQUEST_COOKIE_DELIM, 0);
 	int cookie_counter = 0;
 
@@ -123,13 +135,19 @@ int http_request_parse_cookies(GHashTable *cookies, gchar *http_cookies) {
 		gchar *value_stripped = g_malloc(gchar_array_len(split_key_values[1]));
 		gchar_char_strip(key_stripped, key, '"');
 		gchar_char_strip(value_stripped, value, '"');
+
 		if(!g_hash_table_contains(cookies, key_stripped)){
 			g_hash_table_insert(cookies, key_stripped, value_stripped);
 		}
 
+		g_free(key);
+		if(value != NULL) {
+			g_free(value);
+		}
 		g_strfreev(split_key_values);
 		cookie_counter++;
 	}
+
 	g_strfreev(cookie_split);
 	return 0;
 }
