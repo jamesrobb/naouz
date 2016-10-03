@@ -8,8 +8,6 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
     connection->request->header_fields = g_hash_table_new_full(g_str_hash, g_str_equal, ghash_table_gchar_destroy, ghash_table_gchar_destroy);
     connection->request->payload = g_string_new("");
 
-    GString *uri = g_string_new("");
-    GString *cookie_field = g_string_new("");
     int header_ret = http_request_parse_header(connection->request->header_fields, data_buffer);
     int queries_ret = 0;
     int cookies_ret = 0;
@@ -18,13 +16,12 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
 
     if(g_hash_table_contains(connection->request->header_fields, "http_method") == TRUE && header_ret == 0) {
 
-    	GString *http_method = g_string_new(g_hash_table_lookup(connection->request->header_fields, "http_method"));
+    	gchar *http_method = g_hash_table_lookup(connection->request->header_fields, "http_method");
 
-    	if(g_strcmp0(http_method->str, "GET") != 0 && g_strcmp0(http_method->str, "POST") != 0 && g_strcmp0(http_method->str, "HEAD") != 0) {
+    	if(g_strcmp0(http_method, "GET") != 0 && g_strcmp0(http_method, "POST") != 0 && g_strcmp0(http_method, "HEAD") != 0) {
     		method_check = -1;
     	}
 
-    	g_string_free(http_method, TRUE);
 	}
 
 	if(header_ret == 0) {
@@ -63,23 +60,20 @@ int parse_client_http_request(client_connection *connection, char* data_buffer) 
 
     if(g_hash_table_contains(connection->request->header_fields, "http_uri") == TRUE && header_ret == 0) {
 
-    	g_string_append(uri, g_hash_table_lookup(connection->request->header_fields, "http_uri"));
-    	queries_ret = http_request_parse_queries(connection->request->queries, uri->str);
+    	gchar *uri = g_hash_table_lookup(connection->request->header_fields, "http_uri");
+    	queries_ret = http_request_parse_queries(connection->request->queries, uri);
 
     }
 
     if(g_hash_table_contains(connection->request->header_fields, "cookie") == TRUE && header_ret == 0) {
 
-		g_string_append(cookie_field, g_hash_table_lookup(connection->request->header_fields, "cookie"));
-		cookies_ret = http_request_parse_cookies(connection->request->cookies, cookie_field->str);
+		gchar *cookie_field = g_hash_table_lookup(connection->request->header_fields, "cookie");
+		cookies_ret = http_request_parse_cookies(connection->request->cookies, cookie_field);
     }
 
     if(header_ret == 0) {
     	http_request_parse_payload(connection->request->payload, data_buffer);
     }
-
-    g_string_free(uri, TRUE);
-    g_string_free(cookie_field, TRUE);
 
     // blanket error return - did any error happen?
     return header_ret || queries_ret || cookies_ret || method_check || connection_header_check;
