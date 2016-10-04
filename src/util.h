@@ -17,4 +17,8 @@ void ghash_table_gchar_destroy(gpointer value);
 
 void gchar_char_strip(gchar *destination, gchar* source, gchar strip_char);
 
+void gdateweekday_to_gstring(GDateWeekday day, GString *name);
+
+void gdatemonth_to_gstring(GDateMonth mon, GString *name);
+
 #endif
