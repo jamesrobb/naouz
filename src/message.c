@@ -35,9 +35,36 @@ void http_build_document(GString *document, gchar *title, gchar *body) {
 
 void http_build_header(GString *header, gchar *response_code, gchar *content_type, GPtrArray *cookie_array, int payload_length, gboolean keep_alive) {
 
+	//Sun, 06 Nov 1994 08:49:37 GMT
+	GDateTime *now = g_date_time_new_now_utc();
+	GDate *now_date = g_date_new_dmy(g_date_time_get_day_of_month(now),
+									 g_date_time_get_month(now),
+									 g_date_time_get_year(now));
+	
+	GString *weekday = g_string_new("");
+	GString *month = g_string_new("");
+
+	GDateWeekday weekdaynum = g_date_get_weekday(now_date);
+	GDateMonth monthnum = g_date_get_month(now_date);
+	gdateweekday_to_gstring(weekdaynum, weekday);
+	gdatemonth_to_gstring(monthnum, month);
+
+	int day_of_month = g_date_get_day(now_date);
+	int year = g_date_get_year(now_date);
+	
+	gint hour = g_date_time_get_hour(now);
+	gint minute = g_date_time_get_minute(now);
+	gint second = g_date_time_get_second(now);
+
 	g_string_append_printf(header, "HTTP/1.1 %s%s", response_code, NEWLINE_DELIM);
+	g_string_append_printf(header, "Date: %s, %d %s %d %02d:%02d:%02d GMT%s", weekday->str, day_of_month, month->str, year, hour, minute, second, NEWLINE_DELIM);
     g_string_append_printf(header, "Server: naouz/%s%s", NAOUZ_VERSION, NEWLINE_DELIM);
     g_string_append_printf(header, "Content-Type: %s%s", content_type, NEWLINE_DELIM);
+
+    g_date_time_unref(now);
+    g_date_free(now_date);
+    g_string_free(weekday, TRUE);
+    g_string_free(month, TRUE);
 
     if(keep_alive == FALSE) {
     	g_string_append_printf(header, "Connection: close%s", NEWLINE_DELIM);
