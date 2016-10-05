@@ -135,8 +135,6 @@ int main(int argc, char *argv[]) {
         }
 
         select_activity = select(incoming_sd_max + 1, &incoming_fds, NULL, NULL, &select_timeout);
-        //g_print("%d\n", select_activity);
-        //g_info("select() timout or activity");
 
         // this is done to handle the case where select was not interrupted (ctrl+c) but returned an error.
         if(errno != EINTR && select_activity < 0){
